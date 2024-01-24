@@ -29,8 +29,8 @@ QList< QString> Downloader::GetAllResource(QString url)
 	{	
 		if (reply->error())
 		{
-			result = "ERROR!\n";
-			result+= reply->errorString();
+            ClearResult();
+            AppendResult(QString("ERROR!\n") + reply->errorString());
 		}
 		else
 		{
@@ -44,9 +44,9 @@ QList< QString> Downloader::GetAllResource(QString url)
     return list;
 }
 
-
 void Downloader::DownloadResource(const QString& res,const QString& path)
 {
+    ClearResult();
     QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl(res)));
     QEventLoop eventLoop;
     connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
@@ -58,21 +58,21 @@ void Downloader::DownloadResource(const QString& res,const QString& path)
 
         if (!file.open(QIODevice::WriteOnly)) {
             // Handle error
-            result = "Failed to open file\n"; // throw exception
+             // throw exception
             if (QFileInfo(path + '/' + filename).isFile())
             {
-                result += "The File is exist";
+                AppendResult("Failed to open file!\n The File is exist\n");
             }
         }
         else {
             file.write(reply->readAll());
             file.close();
-            result= filename + QString(" :The download has finished!");
+            AppendResult(filename + QString(" :The download has finished!\n"));
         }
     }
     catch (std::exception e)
     {
-        result = "File Error"+ QString(e.what());
+        AppendResult( "File Error"+ QString(e.what())+'\n');
     }
     reply->deleteLater();
 }
@@ -120,6 +120,39 @@ void Downloader::ReplyFinished(QNetworkReply* reply)
     reply->deleteLater();
 }
 
+void Downloader::CreateLogFolder(const QString& path)
+{
+    //create ip folder
+    QEventLoop loop;
+    QString folderName = GetLocalIP();
+    QString folderPath = "C:/Users/Administrator/Desktop/test/myfolder";
+    QString url = QString("http://192.168.8.222:8080/test/upload");
+    QNetworkRequest folderRequest(url);
+    folderRequest.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));
+    QString jsonData = QString("{\"folderName\":\"%1\",\"parentDirectory\":\"%2\"}")
+        .arg(folderName)
+        .arg(url);
+    //need to set http head
+    QNetworkReply* folderReply = m_manager->put(folderRequest, jsonData.toUtf8());
+    connect(folderReply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    Q_UNUSED(folderReply);
+    QMessageBox::information(nullptr,"error",folderReply->readAll());
+    if (folderReply->isFinished())
+    {
+        if (folderReply->error())
+        {
+            AppendResult("new folder build error:" + folderReply->errorString());
+            
+        }
+        else {
+            AppendResult(folderName + ": the folder has bulid!\n");
+            //UploadLog(path);
+        }
+        folderReply->deleteLater();
+    }
+}
+
 void Downloader::UploadLog(const QString& path)
 {
     QEventLoop loop;
@@ -127,13 +160,21 @@ void Downloader::UploadLog(const QString& path)
     QString fileName = fileInfo.fileName();
     QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     QHttpPart filePart;
-   
+    ClearResult();
+    
+    if (fileInfo.suffix() == "txt")
+    {  
+        filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
+    }
+    else
+    {
+        filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/octet-stream"));
+    }
     filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"filename\"; filename=\"" + fileName + "\""));
-    filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
     QFile* file = new QFile(path);
     if (!file->open(QIODevice::ReadOnly))
     {
-        result= "File open Failed";
+        AppendResult("File didn't open!");
     }
     else {
         filePart.setBody(file->readAll());
@@ -145,9 +186,11 @@ void Downloader::UploadLog(const QString& path)
         QUrl url = QString("http://192.168.8.222:8080/test/");
         
         QNetworkRequest request;
-        request.setUrl(url); 
+        request.setUrl(url);
         request.setRawHeader("Content-Type", "multipart/form-data");
-        request.setHeader(QNetworkRequest::ContentLengthHeader, QVariant(multiPart->boundary().length() + file->size()));
+        request.setRawHeader("Connection", "keep-alive");
+        request.setRawHeader("Content-Length",QByteArray::number(multiPart->boundary().length()+file->size()));
+        //request.setRawHeader("Transfer-Encoding", "chunked");
         QNetworkReply* reply= m_manager->post(request, multiPart);
         multiPart->setParent(reply);
         
@@ -157,61 +200,98 @@ void Downloader::UploadLog(const QString& path)
         {
             if (reply->error())
             {
-                result = "upload error:" + reply->errorString();
+                AppendResult("upload error:" + reply->errorString());
             }
             else
             {
-                result+= "Header:"+ reply->header(QNetworkRequest::ContentTypeHeader).toString()+"\n";
-                result+= reply->header(QNetworkRequest::LastModifiedHeader).toDateTime().toString()+"\n";
-                result+= reply->header(QNetworkRequest::ContentLengthHeader).toULongLong() + "\n";
-                result+= "attribute:" + reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                result += "\n";
-                result+= reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString() + "\n";
-
-                result += fileName + ": the Upload has finished!";
-                reply->deleteLater();
+                AppendResult("Header:" + reply->header(QNetworkRequest::ContentTypeHeader).toString() + "\n" +
+                    reply->header(QNetworkRequest::LastModifiedHeader).toDateTime().toString() + "\n" +
+                    reply->header(QNetworkRequest::ContentLengthHeader).toULongLong() + "\n" +
+                    "attribute:" + reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() +
+                    "\n" + reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString() + "\n" +
+                    fileName + ": the Upload has finished!\n");             
             }
+            reply->deleteLater();
             UpdateLog(fileName, url.userName());
         }
     }
 }
 
-void Downloader::UpdateLog(const QString& fileName, const QString& userName)
+QString Downloader::GetLocalIP()
 {
-    QEventLoop loop;
-    QString logResult,ipAddress;
-    logResult = " fileName : " + fileName + " userName : " + userName;
-    //get ipList
+    QString ipAddress;
     QList<QHostAddress> ipList = QNetworkInterface::allAddresses();
     for (QHostAddress ip : ipList)
     {
         if (ip.protocol() == QAbstractSocket::IPv4Protocol && ip != QHostAddress::LocalHost)
         {
-            ipAddress = QString(" IP : ").append(ip.toString());
-            
+            ipAddress = ip.toString();
         }
     }
-    logResult += ipAddress;
-    QString url = "http://192.168.8.222:8080/test/UploadLogs.txt";
+    return ipAddress;
+}
+
+void Downloader::UpdateLog(const QString& fileName, const QString& userName)
+{
+    QEventLoop loop;
+    QString url = "http://192.168.8.222:8080/test/logs.txt";
     QNetworkRequest request(url);
     //request.setHeader(QNetworkRequest::ContentLengthHeader, QVariant(logResult.length()));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
-    //add to 
-    QNetworkReply* reply = m_manager->post(request,logResult.toUtf8());
+    //add to
+    QNetworkReply* reply = m_manager->get(request);
     connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
+    QByteArray previous = reply->readAll();
     if (reply->isFinished())
     {
         if (reply->error() == QNetworkReply::NoError)
         {
-            result += logResult + '\n';
-            result += "Logs update!";
-            reply->deleteLater();
+            QString later = "ip: " + GetLocalIP() + " filename: " + fileName + " username: " + userName;
+            QString url = "http://192.168.8.222:8080/test/";
+            QNetworkRequest request(url);
+            QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+            QHttpPart newPart;
+            QFile* file=new QFile;
+            newPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"filename\"; filename=\"logs.txt\""));
+            newPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
+            QString s =file->readAll();
+            QMessageBox::information(nullptr, "", s);
+            if (file->open(QIODevice::ReadWrite))
+            {
+                file->write(previous);
+                newPart.setBody(file->readAll());
+                file->setParent(multiPart);
+                file->flush();
+                file->close();
+            }
+            else
+            {
+                AppendResult("\nFile open failed!");
+            }
+            delete file;
+            multiPart->append(newPart);
+            request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("multipart/form-data"));
+            QNetworkReply* postReply = m_manager->post(request, multiPart);
+            multiPart->setParent(postReply);
+            connect(postReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+            loop.exec();
+            if (postReply->isFinished())
+            {
+                if (postReply->error() == QNetworkReply::NoError)
+                {
+                    AppendResult("\nLogs update!");
+                }
+                else
+                {
+                    AppendResult("post update logs:" + postReply->errorString());
+                }
+                postReply->deleteLater();
+            }
         }
         else
         {
-            result += reply->errorString();
+            AppendResult("get previous logs:"+reply->errorString());
         }
+        reply->deleteLater();
     }
-
 }
