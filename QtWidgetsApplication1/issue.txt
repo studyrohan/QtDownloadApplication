@@ -1,0 +1,11 @@
+目前遇到的：
+在download.cpp：UploadLog()
+上传文件的http请求头需要有Content-Length字段，这个字段描述的是http请求的长度（包括文件大小）。
+因为上传使用的是表单模式（multiPart/form-data），所以这个boundary的大小不确定，文件也会因为编码格式会导致乱码等。
+可能会出现的情况：长度过长导致无响应/长度过短导致截断并下一个传输会出现Method not Allowed
+
+
+在QWidgetsApplication1.cpp:UpdateLog()
+文件上传同名不会导致覆盖，它会自动计数加一，例如todo.txt 、todo(1).txt
+但是因为上传问题，日志文件的更改出现问题，目前只写好了上传日志的函数体但是仍未能更新日志
+目前还不知道怎么在服务器新建文件夹（MKCOL命令不支持）

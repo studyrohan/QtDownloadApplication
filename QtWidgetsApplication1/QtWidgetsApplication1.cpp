@@ -30,8 +30,8 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	m_resTable = new QTableWidget();
 	m_resTable->setRowCount(1);
 	m_resTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	m_button5 = new QPushButton("Check ODTestTool.exe");
-	m_button6 = new QPushButton("Upload Logs");
+	m_button5 = new QPushButton("check overdrive package validity");
+	m_button6 = new QPushButton("upload logs");
 	//add scrollBar
 	QScrollArea* scrollBar = new QScrollArea();
     m_output = new QLabel();
@@ -100,7 +100,7 @@ void QtWidgetsApplication1::DownLoadResult()
 			{
 				QString url = QString::fromUtf8("http://192.168.8.222:8080/Overdrive/").append(name);
 				m_download->DownloadResource(url, savePath);
-				m_output->setText(m_download->result);
+				m_output->setText(m_download->GetResult());
 			}
 			else
 			{
@@ -115,6 +115,7 @@ void QtWidgetsApplication1::DownLoadResult()
 }
 void QtWidgetsApplication1::ShowResource()
 {
+	//List 
 	QList<QString> resource = m_download->GetAllResource();
 	
 	m_resTable->setColumnCount(2);
@@ -134,8 +135,13 @@ void QtWidgetsApplication1::ShowResource()
 }
 void  QtWidgetsApplication1::CheckSoftware()
 {
+	m_download->ClearResult();
 	//GET PROCESSID
 	HANDLE  hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (hSnapshot == INVALID_HANDLE_VALUE) {
+		m_output->setText("Failed to create snapshot");
+		return;
+	}
 
 	PROCESSENTRY32 pe;
 	DWORD processId;
@@ -148,6 +154,8 @@ void  QtWidgetsApplication1::CheckSoftware()
 		//find odtesttool.exe
 		while (flag != 0)
 		{
+			clock_t start,end;
+			start = clock();
 			std::string result = converter->to_bytes(pe.szExeFile);
 
 			if (std::strcmp(result.c_str(), "ODTestTool.exe") == 0)
@@ -155,6 +163,11 @@ void  QtWidgetsApplication1::CheckSoftware()
 				processId = pe.th32ProcessID;
 			}
 			flag = Process32Next(hSnapshot, &pe);
+			//if overtime ,throw error
+			if ((clock() - start) / CLOCKS_PER_SEC > 5)
+			{
+				m_output->setText("Couldn't find the process! You should open it!");
+			}
 		}
 	}
 	catch (std::exception e)
@@ -165,7 +178,7 @@ void  QtWidgetsApplication1::CheckSoftware()
 	//MODULE CHECK
 	 hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, processId);
 	if (hSnapshot == INVALID_HANDLE_VALUE) {
-		std::cerr << "Failed to create snapshot" << std::endl;
+		m_output->setText("Failed to create snapshot");
 		return;
 	}
 
@@ -173,24 +186,27 @@ void  QtWidgetsApplication1::CheckSoftware()
 	me.dwSize = sizeof(me);
 
 	if (!Module32First(hSnapshot, &me)) {
-		std::cerr << "Failed to get first module" << std::endl;
+		m_output->setText("Failed to get first module");
 		CloseHandle(hSnapshot);
 		return;
 	}
 	std::string result;
 	do {
 		std::string name = converter->to_bytes(me.szModule);
-		result += "Module Name: " + name +"\n";// << std::endl;
+		result += "Module Name: " + name +"\n";
 	} while (Module32Next(hSnapshot, &me));
 	m_output->setText(result.c_str());
 
 }
 void QtWidgetsApplication1::SendLog()
 {
-	QString logPath = QFileDialog::getOpenFileName(this, "open files", QDir::currentPath(), "文本文件(*.txt)");
-	
+	QString logPath = QFileDialog::getOpenFileName(this, "open files", QDir::currentPath(), "日志文件(*.txt;*.js)");
+	int index = logPath.lastIndexOf(".");
+	//m_download->CreateLogFolder(logPath);
 	m_download->UploadLog(logPath);
-	m_output->setText(m_download->result);
+	//m_download->UpdateLog("", "");
+
+	m_output->setText(m_download->GetResult());
 }
 void QtWidgetsApplication1::InitSlots()
 {
