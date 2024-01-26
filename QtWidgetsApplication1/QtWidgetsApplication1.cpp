@@ -9,6 +9,9 @@
 #include <windows.h>
 #include <tlhelp32.h>
 #include <iostream>
+#include <string>
+#include <locale>
+#include <winsock2.h>
 #include <shellapi.h>
 #include <QFileDialog>
 #include "downloader.h"

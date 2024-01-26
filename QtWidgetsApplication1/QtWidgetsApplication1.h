@@ -2,9 +2,6 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_QtWidgetsApplication1.h"
-#include <string>
-#include <locale>
-#include <winsock2.h>  
 #include "downloader.h"
 class QPushButton;
 class QTextEdit;

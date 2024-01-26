@@ -22,11 +22,14 @@ public:
     void DownloadResource(const QString& res,const QString& path);
 
     void DoDownload();
+    void CreateLogFolder(const QString& path);
     void UploadLog(const QString &path);
-
+    QString GetLocalIP()const;
     QByteArray GetContext() const;
 
-    QString result;
+    void AppendResult(const QString& res){m_result .append(res);}
+    void ClearResult(){m_result = "";}
+    QString GetResult(){return m_result;}
 signals:
 
 public slots:
@@ -36,7 +39,7 @@ public slots:
 private:
     QNetworkAccessManager* m_manager;
     QByteArray m_context;
-    
+    QString m_result;
 };
 
 #endif
