@@ -124,7 +124,6 @@ void Downloader::CreateLogFolder(const QString& path)
     //create ip folder
     QEventLoop loop;
     QString folderName = GetLocalIP();
-    QString folderPath = "C:/Users/Administrator/Desktop/test/myfolder";
     QString url = QString("http://192.168.8.222:8080/test/upload");
     QNetworkRequest folderRequest(url);
     folderRequest.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));

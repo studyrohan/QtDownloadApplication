@@ -200,7 +200,7 @@ void  QtWidgetsApplication1::CheckSoftware()
 }
 void QtWidgetsApplication1::SendLog()
 {
-	QString logPath = QFileDialog::getOpenFileName(this, "open files", QDir::currentPath(), "日志文件(*.txt;*.json)");
+	QString logPath = QFileDialog::getOpenFileName(this, "open files", QDir::currentPath(), "日志文件(*.txt;*.js)");
 	int index = logPath.lastIndexOf(".");
 	//m_download->CreateLogFolder(logPath);
 	m_download->UploadLog(logPath);
