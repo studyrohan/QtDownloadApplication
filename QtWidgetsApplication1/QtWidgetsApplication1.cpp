@@ -3,6 +3,7 @@
 #include <QScrollArea>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QTextEdit>
 #include <QTableWidget>
@@ -32,6 +33,11 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	m_resTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	m_button5 = new QPushButton("check overdrive package validity");
 	m_button6 = new QPushButton("upload logs");
+	m_progressBar = new QProgressBar();
+	m_progressBar->setVisible(false);
+	m_progressBar->setTextVisible(true);
+	m_progressBar->setMaximum(100);
+	m_progressBar->setMinimum(0);
 	//add scrollBar
 	QScrollArea* scrollBar = new QScrollArea();
     m_output = new QLabel();
@@ -52,6 +58,7 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	layout->addWidget(m_resTable);
 	layout->addWidget(m_button5);
 	layout->addWidget(m_button6);
+	layout->addWidget(m_progressBar);
 	layout->addWidget(scrollBar);
 	setCentralWidget(new QWidget);
 	centralWidget()->setLayout(layout);
@@ -87,7 +94,8 @@ void QtWidgetsApplication1::DownLoadResult()
 		QModelIndex index = m_resTable->indexAt(QPoint(button->pos().x(), button->pos().y()));
 		row = index.row();
 	}
-	
+	m_progressBar->reset();
+	m_progressBar->setVisible(true);
 	QTableWidgetItem* item = m_resTable->item(row, 0);
 	if (item !=nullptr)
 	{
@@ -133,7 +141,7 @@ void QtWidgetsApplication1::ShowResource()
 		connect(downloadButton, SIGNAL(clicked()), this, SLOT(DownLoadResult()));	
 	}
 }
-void  QtWidgetsApplication1::CheckSoftware()
+void QtWidgetsApplication1::CheckSoftware()
 {
 	m_download->ClearResult();
 	//GET PROCESSID
@@ -167,6 +175,7 @@ void  QtWidgetsApplication1::CheckSoftware()
 			if ((clock() - start) / CLOCKS_PER_SEC > 5)
 			{
 				m_output->setText("Couldn't find the process! You should open it!");
+				return;
 			}
 		}
 	}
@@ -200,6 +209,8 @@ void  QtWidgetsApplication1::CheckSoftware()
 }
 void QtWidgetsApplication1::SendLog()
 {
+	//m_progressBar->reset();
+	//m_progressBar->setVisible(true);
 	QString logPath = QFileDialog::getOpenFileName(this, "open files", QDir::currentPath(), "日志文件(*.txt;*.json)");
 	int index = logPath.lastIndexOf(".");
 	//m_download->CreateLogFolder(logPath);
@@ -215,6 +226,13 @@ void QtWidgetsApplication1::InitSlots()
 	connect(m_button3,SIGNAL(clicked()), this, SLOT(ShowResource()));
 	connect(m_button5,SIGNAL(clicked()), this, SLOT(CheckSoftware()));
 	connect(m_button6, SIGNAL(clicked()), this, SLOT(SendLog()));
+	connect(m_download, &Downloader::updateProgress, this, &QtWidgetsApplication1::ShowProgress);
+}
+void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal progress)
+{
+	m_progressBar->setValue(progress);
+	QString text = "current progress:" + QString::number(progress) + "%";
+	m_progressBar->setFormat(text);
 }
 QtWidgetsApplication1::~QtWidgetsApplication1()
 {}

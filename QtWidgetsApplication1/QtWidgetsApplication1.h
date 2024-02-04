@@ -5,6 +5,8 @@
 #include "downloader.h"
 class QPushButton;
 class QTextEdit;
+class QTimer;
+class QProgressBar;
 class QTableWidget;
 class QLabel;
 
@@ -27,7 +29,7 @@ private slots:
     //to do 
     void CheckSoftware();
     void SendLog();
-
+    void ShowProgress(qint64 received,qint64 total,qreal progress);
 
 
 
@@ -40,6 +42,8 @@ private:
     QPushButton* m_button6;
     QTextEdit* m_line;
     QLabel* m_output;
+    QProgressBar* m_progressBar;
+    QTimer* m_timer;
     QTableWidget* m_resTable;
     Downloader* m_download;
 };

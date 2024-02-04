@@ -43,38 +43,44 @@ QList< QString> Downloader::GetAllResource(QString url)
     return list;
 }
 
-void Downloader::DownloadResource(const QString& res,const QString& path)
+void Downloader::DownloadResource(const QString& res, const QString& path)
 {
     ClearResult();
     QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl(res)));
     QEventLoop eventLoop;
     connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
+    connect(reply, &QNetworkReply::downloadProgress, this, &Downloader::DealProgress);
     eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
-    try {
-        int startIndex = res.lastIndexOf("/");
-        QString filename = res.mid(startIndex + 1);
-        QFile file(path + '/' + filename);
 
+    qint64 fileSize = reply->size();
+    AppendResult( "File size:" +QString::number(fileSize/(2048*2048))+" MB\n");
+
+    int startIndex = res.lastIndexOf("/");
+    QString filename = res.mid(startIndex + 1);
+    QFile file(path + '/' + filename);
+    try {
         if (!file.open(QIODevice::WriteOnly)) {
             // Handle error
              // throw exception
+            AppendResult("Failed to open file!");
             if (QFileInfo(path + '/' + filename).isFile())
             {
-                AppendResult("Failed to open file!\n The File is exist\n");
+                AppendResult("The File is exist\n");
             }
         }
         else {
             file.write(reply->readAll());
             file.close();
             AppendResult(filename + QString(" :The download has finished!\n"));
+            reply->deleteLater();
         }
     }
     catch (std::exception e)
     {
         AppendResult( "File Error"+ QString(e.what())+'\n');
     }
-    reply->deleteLater();
 }
+
 
 void Downloader::DoDownload()
 {
@@ -124,6 +130,7 @@ void Downloader::CreateLogFolder(const QString& path)
     //create ip folder
     QEventLoop loop;
     QString folderName = GetLocalIP();
+    QString folderPath = "C:/Users/Administrator/Desktop/test/myfolder";
     QString url = QString("http://192.168.8.222:8080/test/upload");
     QNetworkRequest folderRequest(url);
     folderRequest.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));
@@ -179,6 +186,7 @@ void Downloader::UploadLog(const QString& path)
         file->setParent(multiPart);
         file->close();
         multiPart->append(filePart);
+        multiPart->setBoundary("i'm-a-boundary");
 
         //request post
         QUrl url = QString("http://192.168.8.222:8080/test/");
@@ -186,13 +194,13 @@ void Downloader::UploadLog(const QString& path)
         QNetworkRequest request;
         request.setUrl(url);
         request.setRawHeader("Content-Type", "multipart/form-data");
-        request.setRawHeader("Connection", "keep-alive");
-        request.setRawHeader("Content-Length",QByteArray::number(multiPart->boundary().length()+file->size()));
-        //request.setRawHeader("Transfer-Encoding", "chunked");
+        qDebug()<< QByteArray::number(multiPart->boundary().length() + file->size());
+        request.setRawHeader("Content-Length",QByteArray::number( multiPart->boundary().length()+file->size()));
         QNetworkReply* reply= m_manager->post(request, multiPart);
         multiPart->setParent(reply);
 
         connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        //connect(reply, &QNetworkReply::uploadProgress, this, &Downloader::DealProgress);
         loop.exec();
         if (reply->isFinished())
         {
@@ -202,15 +210,10 @@ void Downloader::UploadLog(const QString& path)
             }
             else
             {
-                AppendResult("Header:" + reply->header(QNetworkRequest::ContentTypeHeader).toString() + "\n" +
-                    reply->header(QNetworkRequest::LastModifiedHeader).toDateTime().toString() + "\n" +
-                    reply->header(QNetworkRequest::ContentLengthHeader).toULongLong() + "\n" +
-                    "attribute:" + reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() +
-                    "\n" + reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString() + "\n" +
-                    fileName + ": the Upload has finished!\n");             
+                AppendResult(fileName + ": the Upload has finished!\n");             
             }
             reply->deleteLater();
-            UpdateLog(fileName, url.userName());
+            //UpdateLog(fileName, url.userName());
         }
     }
 }
@@ -292,4 +295,10 @@ void Downloader::UpdateLog(const QString& fileName, const QString& userName)
         }
         reply->deleteLater();
     }
+}
+
+void Downloader::DealProgress(qint64 bytes, qint64 total)
+{
+    qreal progress = bytes * 100 / total ;
+    emit updateProgress(bytes, total, progress);
 }

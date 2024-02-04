@@ -31,11 +31,12 @@ public:
     void ClearResult(){m_result = "";}
     QString GetResult(){return m_result;}
 signals:
+    void updateProgress(qint64 receive, qint64 total, qreal progress);
 
 public slots:
     void ReplyFinished(QNetworkReply* reply);
     void UpdateLog(const QString& fileName, const QString& userName);
-
+    void DealProgress(qint64 bytes, qint64 total);
 private:
     QNetworkAccessManager* m_manager;
     QByteArray m_context;
