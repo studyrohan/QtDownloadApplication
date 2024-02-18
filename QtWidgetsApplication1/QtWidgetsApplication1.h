@@ -5,7 +5,10 @@
 #include "downloader.h"
 class QPushButton;
 class QTextEdit;
+class QTimer;
+class QProgressBar;
 class QTableWidget;
+class QLabel;
 
 class QtWidgetsApplication1 : public QMainWindow
 {
@@ -15,6 +18,9 @@ public:
     QtWidgetsApplication1(QWidget *parent = nullptr);
     ~QtWidgetsApplication1();
     void InitSlots();
+
+signals:
+
 private slots:
     void ShowDownLoadResult();
     void DownLoadResult();
@@ -22,7 +28,9 @@ private slots:
     void ShowResource();
     //to do 
     void CheckSoftware();
-    //bool SendLog(const QString& file);
+    void SendLog();
+    void ShowProgress(qint64 received,qint64 total,qreal progress);
+
 
 
 private:
@@ -30,7 +38,12 @@ private:
     QPushButton* m_button2;
     QPushButton* m_button3;
     QPushButton* m_button4;
+    QPushButton* m_button5;
+    QPushButton* m_button6;
     QTextEdit* m_line;
+    QLabel* m_output;
+    QProgressBar* m_progressBar;
+    QTimer* m_timer;
     QTableWidget* m_resTable;
     Downloader* m_download;
 };
