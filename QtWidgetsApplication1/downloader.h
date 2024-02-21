@@ -25,6 +25,7 @@ public:
     void CreateLogFolder(const QString& path);
     void UploadLog(const QString &path);
     void SendFileByTcp(const QString &path);
+    void DownloadlicensFile(int level);
     void SendFileByHttp(const QString &path);
     QString GetLocalIP()const;
     QByteArray GetContext() const;

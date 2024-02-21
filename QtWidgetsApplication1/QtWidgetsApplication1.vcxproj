@@ -87,6 +87,8 @@
     <QtUic Include="QtWidgetsApplication1.ui" />
     <QtMoc Include="QtWidgetsApplication1.h" />
     <ClCompile Include="downloader.cpp" />
+    <ClCompile Include="LoginClient.cpp" />
+    <ClCompile Include="LoginWidget.cpp" />
     <ClCompile Include="QtWidgetsApplication1.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -95,6 +97,12 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="LoginClient.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="LoginWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

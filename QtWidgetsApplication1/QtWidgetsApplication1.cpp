@@ -7,22 +7,26 @@
 #include <QPushButton>
 #include <QTextEdit>
 #include <QTableWidget>
+#include <QMessageBox>
 #include <windows.h>
 #include <tlhelp32.h>
 #include <iostream>
 #include <string>
 #include <locale>
-//#include <winsock2.h>
 #include <shellapi.h>
 #include <QFileDialog>
 #include "downloader.h"
+#include "LoginWidget.h"
 
 QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), m_isLogInlevel(-1)
 {
+	m_loginWidget = new LoginWidget;
+	m_loginWidget->setWindowModality(Qt::WindowModality::ApplicationModal);
 	m_download = new Downloader(this);
 	QVBoxLayout* layout = new QVBoxLayout;
-
+	m_loginButton = new QPushButton("login");
+	m_downloadLicenseButton = new QPushButton("download license");
 	m_button1 = new QPushButton("update installation package");
 	m_button2 = new QPushButton("get result");
 	m_button3 = new QPushButton("show resources");
@@ -53,21 +57,29 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	
 	//layout->addWidget(m_button1);
 	//layout->addWidget(m_button2);
+	layout->addWidget(m_loginButton);
 	layout->addWidget(m_button3);
 	//layout->addWidget(m_line);
 	layout->addWidget(m_resTable);
+	layout->addWidget(m_downloadLicenseButton);
 	layout->addWidget(m_button5);
 	layout->addWidget(m_button6);
 	layout->addWidget(m_progressBar);
 	layout->addWidget(scrollBar);
 	setCentralWidget(new QWidget);
 	centralWidget()->setLayout(layout);
-
+	this->setWindowTitle("ovedrive kernel downloader");
 	InitSlots();
+
 }
 
 void QtWidgetsApplication1::StartDownLoad()
 {
+	if (!GetIsLogIn())
+	{
+		QMessageBox::information(NULL, "Attention", "please log in");
+		return;
+	}
 	m_download->DoDownload();
 
 }
@@ -84,6 +96,7 @@ void QtWidgetsApplication1::ShowDownLoadResult()
 	//}
 	m_line->setText(context);
 }
+
 void QtWidgetsApplication1::DownLoadResult()
 {
 	//get the button row
@@ -124,6 +137,11 @@ void QtWidgetsApplication1::DownLoadResult()
 void QtWidgetsApplication1::ShowResource()
 {
 	//List 
+	if (!GetIsLogIn())
+	{
+		QMessageBox::information(NULL, "Attention", "please log in");
+		return;
+	}
 	QList<QString> resource = m_download->GetAllResource();
 	
 	m_resTable->setColumnCount(2);
@@ -143,6 +161,11 @@ void QtWidgetsApplication1::ShowResource()
 }
 void QtWidgetsApplication1::CheckSoftware()
 {
+	if (!GetIsLogIn())
+	{
+		QMessageBox::information(NULL, "Attention", "please log in");
+		return;
+	}
 	m_download->ClearResult();
 	//GET PROCESSID
 	HANDLE  hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -211,6 +234,11 @@ void QtWidgetsApplication1::SendLog()
 {
 	//m_progressBar->reset();
 	//m_progressBar->setVisible(true);
+	if (!GetIsLogIn())
+	{
+		QMessageBox::information(NULL, "Attention", "please log in");
+		return;
+	}
 	QString logPath = QFileDialog::getOpenFileName(this, "open files", QDir::currentPath(), "日志文件(*.txt;*.json)");
 	int index = logPath.lastIndexOf(".");
 	//m_download->CreateLogFolder(logPath);
@@ -221,11 +249,15 @@ void QtWidgetsApplication1::SendLog()
 }
 void QtWidgetsApplication1::InitSlots()
 {
+
+	connect(m_loginButton,SIGNAL(clicked()), this, SLOT(showLogin()));
+	connect(m_downloadLicenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
 	connect(m_button1,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
 	connect(m_button2,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
 	connect(m_button3,SIGNAL(clicked()), this, SLOT(ShowResource()));
 	connect(m_button5,SIGNAL(clicked()), this, SLOT(CheckSoftware()));
 	connect(m_button6, SIGNAL(clicked()), this, SLOT(SendLog()));
+	connect(m_loginWidget, SIGNAL(loginClicked(int)), this, SLOT(SetLogIn(int)));
 	connect(m_download, &Downloader::updateProgress, this, &QtWidgetsApplication1::ShowProgress);
 }
 void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal progress)
@@ -234,5 +266,39 @@ void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal prog
 	QString text = "current progress:" + QString::number(progress) + "%";
 	m_progressBar->setFormat(text);
 }
+
+void QtWidgetsApplication1::DownloadLicense()
+{
+	if (m_isLogInlevel >= 0 && m_isLogInlevel <= 3)
+	{
+		m_download->DownloadlicensFile(m_isLogInlevel);
+	}
+	else
+	{
+		QMessageBox::information(NULL, "Attention", "please log in");
+		return;
+	}
+}
+
+void QtWidgetsApplication1::showLogin()
+{
+	m_loginWidget->show();
+}
+
+void QtWidgetsApplication1::SetLogIn(int level)
+{
+	if (level>=0&&level<=3)
+	{
+		m_loginWidget->hide();
+	}
+	
+	m_isLogInlevel = level;
+}
+
+bool QtWidgetsApplication1::GetIsLogIn() const
+{
+	return m_isLogInlevel>=0&& m_isLogInlevel<=3;
+}
+
 QtWidgetsApplication1::~QtWidgetsApplication1()
 {}

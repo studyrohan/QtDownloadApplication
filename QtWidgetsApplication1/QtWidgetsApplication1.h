@@ -9,6 +9,7 @@ class QTimer;
 class QProgressBar;
 class QTableWidget;
 class QLabel;
+class LoginWidget;
 
 class QtWidgetsApplication1 : public QMainWindow
 {
@@ -31,9 +32,15 @@ private slots:
     void SendLog();
     void ShowProgress(qint64 received,qint64 total,qreal progress);
 
-
+    void DownloadLicense();
+    void showLogin();
+    void SetLogIn(int);
+    bool GetIsLogIn() const;
 
 private:
+    QPushButton* m_loginButton;
+    QPushButton* m_downloadLicenseButton;
+    LoginWidget* m_loginWidget;
     QPushButton* m_button1;
     QPushButton* m_button2;
     QPushButton* m_button3;
@@ -46,4 +53,7 @@ private:
     QTimer* m_timer;
     QTableWidget* m_resTable;
     Downloader* m_download;
+
+private:
+    int m_isLogInlevel;
 };

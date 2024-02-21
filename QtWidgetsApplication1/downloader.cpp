@@ -10,6 +10,7 @@
 #include <QEventLoop>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QFileDialog>
 
 
 Downloader::Downloader(QObject* parent)
@@ -162,21 +163,7 @@ void Downloader::SendFileByTcp(const QString& path)
 {
     ClearResult();
     QTcpSocket socket;
-	QList<QHostAddress> list = QNetworkInterface::allAddresses();
-    QString ip;
-    foreach(QHostAddress address, list)
-    {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol)
-        {
-            if (address.toString().contains("127.0."))
-            {
-                continue;
-            }
-            ip =  address.toString();
-        }
-        else if (address.isNull())  // 主机地址为空
-            continue;
-    }
+
     socket.connectToHost("127.0.0.1", 1234);
     if (!socket.waitForConnected()) {
         AppendResult("Failed to connect to server: " + socket.errorString());
@@ -216,6 +203,51 @@ void Downloader::SendFileByTcp(const QString& path)
         return;
     }
     AppendResult("succeed!");
+}
+
+void Downloader::DownloadlicensFile(int level)
+{
+	ClearResult();
+	QString dir = QFileDialog::getExistingDirectory(nullptr, tr("Open Directory"), "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (dir.isEmpty())
+    {
+        return;
+    }
+	QTcpSocket socket;
+
+	socket.connectToHost("127.0.0.1", 1246);
+	if (!socket.waitForConnected()) {
+		AppendResult("Failed to connect to server: " + socket.errorString());
+		return;
+	}
+	// Send data
+	socket.write(std::to_string(level).c_str());
+	socket.flush();
+
+	// Wait for the reply
+	if (!socket.waitForReadyRead(5000)) {
+		qDebug() << "No reply from the server: " << socket.errorString();
+		return ;
+	}
+
+	// Read the reply
+	QByteArray reply = socket.readAll();
+	qDebug() << "Received reply: " << reply;
+    if (reply.size() == -1) {
+        qDebug() << "Failed to download license:" << socket.errorString();
+        AppendResult("Failed to download license: " + socket.errorString());
+        return;
+    }
+	QFile file(dir.append("/overdrivelicense.txt"));
+	if (!file.open(QIODevice::WriteOnly)) {
+		qDebug() << "Failed to open file for writing: " << file.errorString();
+		AppendResult("Failed to open file for writing: " + file.errorString());
+		return;
+	}
+    file.write(reply);
+    file.flush();
+    file.close();
+    QMessageBox::information(NULL, "", "download license succeed");
 }
 
 void Downloader::SendFileByHttp(const QString& path)
@@ -300,7 +332,6 @@ void Downloader::UploadLog(const QString& path)
     return SendFileByTcp(path);
     // we dont know how to deal with http request ,use tcp is much easier but my lack of information
     //return SendFileByHttp(path);
-    
 }
 
 QString Downloader::GetLocalIP()const

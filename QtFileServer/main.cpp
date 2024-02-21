@@ -1,5 +1,7 @@
 #include "FileServer.h"
 #include "widget.h"
+#include "LogServer.h"
+#include "AuthorizationDownloader.h"
 #include <QtCore/QCoreApplication>
 #include <QApplication>
 #include <QTcpServer>
@@ -16,6 +18,7 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <QtNetwork/QNetworkInterface>
+
 
 
 class FileTransferSocket : public QTcpSocket {
@@ -254,6 +257,18 @@ int main(int argc, char* argv[]) {
         qFatal("Unable to start the server: %s.", qPrintable(server.errorString()));
         return -1;
     }
+
+	LoginServer logServer;
+	if (!logServer.listen(QHostAddress::Any, 1245)) {
+		qDebug() << "Unable to start the server:" << logServer.errorString();
+		return -1;
+	}
+    AuthorizationDownloader authorizationServer;
+    if (!authorizationServer.listen(QHostAddress::Any, 1246)) {
+        qDebug() << "Unable to start the server:" << authorizationServer.errorString();
+        return -1;
+    }
+    
     return app.exec();
 }
 
