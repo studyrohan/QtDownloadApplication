@@ -5,7 +5,6 @@ class QLineEdit;
 class LoginClient;
 class LoginWidget : public QDialog {
     Q_OBJECT
-
 public:
     LoginWidget(QDialog* parent = nullptr);
 
@@ -17,6 +16,10 @@ signals:
 private slots:
     void login();
 
+    void Register();
+
+    void CheckLicense();
+
     void cancel();
 
     void loginSucceed(int level);
@@ -24,5 +27,6 @@ private:
     LoginClient* m_client;
 
     QLineEdit* m_usernameField;
+    QLineEdit* m_inviationField;
     QLineEdit* m_passwordField;
 };

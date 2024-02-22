@@ -17,10 +17,19 @@ void LoginClient::connectToServer(const QString& serverAddress, int port) {
 }
 
 void LoginClient::login(const QString& username, const QString& password) {
-	m_username = username;
-	m_passward = password;
 	QString loginCommand = QString("%1:%2").arg(username).arg(password);
 	m_tcpClient->write(loginCommand.toUtf8());
+}
+
+void LoginClient::Register(const QString& username, const QString& password, const QString& inviation)
+{
+	QString loginCommand = QString("%1:%2:%3").arg(username).arg(password).arg(inviation);
+	m_tcpClient->write(loginCommand.toUtf8());
+}
+
+void LoginClient::CheckLicense(const QString& inviation)
+{
+	m_tcpClient->write(inviation.toUtf8());
 }
 
 void LoginClient::readData() {
@@ -30,7 +39,12 @@ void LoginClient::readData() {
 	QStringList list = response.split(':');
 	if (list.size() == 2)
 	{
-		if (list.at(0) == "LOGIN_SUCCESS")
+		if (list.at(0) == "CHECK_LICENSE")
+		{
+			QMessageBox::information(NULL, "Check license", "License validity is : "+ list.at(1),
+				QMessageBox::Yes, QMessageBox::Yes);
+		}
+		else if (list.at(0) == "LOGIN_SUCCESS")
 		{
 			int level = list.at(1).toInt();
 			if (level >= AuthorizationLevel::AuthorizationLevel0 && level <= AuthorizationLevel::AuthorizationLevel2)
@@ -40,11 +54,40 @@ void LoginClient::readData() {
 				emit loginSucceed(level);
 				return;
 			}
-
+			QMessageBox::information(NULL, "Login", "Login Failed",
+				QMessageBox::Yes, QMessageBox::Yes);
+		}
+		else if (list.at(0) == "REGISTER")
+		{
+			QString logInfomation;
+			int level = list.at(1).toInt();
+			switch (level)
+			{
+			case 0:
+			{
+				logInfomation = "register succeed";
+				emit RegisterResult(0);
+				break;
+			}
+			case 1:
+				logInfomation = "unknown error";
+				break;
+			case 2:
+				logInfomation = "user name already exists";
+				break;
+			case 3:
+				logInfomation = "invalid invitation";
+				break;
+			default:
+				logInfomation = "unknown error";
+				break;
+			}
+			QMessageBox::information(NULL, "Register", logInfomation,
+				QMessageBox::Yes, QMessageBox::Yes);
+			return;
 		}
 	}
-	QMessageBox::information(NULL, "Login", "Login Failed",
-		QMessageBox::Yes, QMessageBox::Yes);
+
 	islogin = false;
 
 	// Here you should handle the server's response, for example, check if the login was successful

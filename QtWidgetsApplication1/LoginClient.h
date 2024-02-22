@@ -20,16 +20,20 @@ public:
 
 	void connectToServer(const QString& serverAddress, int port);
 
-	void login(const QString& username, const QString& password) ;
+	void login(const QString& username, const QString& password);
+
+	void Register(const QString& username, const QString& password,const QString &inviation);
+
+	void CheckLicense(const QString &inviation);
 signals:
 	void loginSucceed(int);
-	
+
+	void RegisterResult(int);
 private slots:
 	void readData();
 
 	void handleError(QAbstractSocket::SocketError error);
 private:
-	QString m_username, m_passward;
 	QTcpSocket* m_tcpClient;
 	bool islogin;
 };

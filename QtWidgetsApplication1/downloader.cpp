@@ -97,6 +97,19 @@ QByteArray Downloader::GetContext()const
     return m_context;
 }
 
+QString Downloader::DecryptData(const QString& data, const QString& key)
+{
+	QByteArray hash = QCryptographicHash::hash(key.toUtf8(), QCryptographicHash::Md5);
+	QByteArray decryptedData = QByteArray::fromHex(data.toUtf8());
+
+	for (int i = 0; i < decryptedData.size(); ++i)
+	{
+		decryptedData[i] = decryptedData[i] ^ hash.at(i % hash.size());
+	}
+
+	return QString(decryptedData);
+}
+
 void Downloader::ReplyFinished(QNetworkReply* reply)
 {
 	if (reply->error())
@@ -232,6 +245,9 @@ void Downloader::DownloadlicensFile(int level)
 
 	// Read the reply
 	QByteArray reply = socket.readAll();
+    //do not change this key
+    const static QString key = "ertyu6789ghjkvbnm";
+    QString decrytReply = DecryptData(QString::fromUtf8(reply), key);
 	qDebug() << "Received reply: " << reply;
     if (reply.size() == -1) {
         qDebug() << "Failed to download license:" << socket.errorString();
@@ -244,7 +260,7 @@ void Downloader::DownloadlicensFile(int level)
 		AppendResult("Failed to open file for writing: " + file.errorString());
 		return;
 	}
-    file.write(reply);
+    file.write(decrytReply.toUtf8());
     file.flush();
     file.close();
     QMessageBox::information(NULL, "", "download license succeed");

@@ -1,11 +1,12 @@
-
-
 #pragma once
 #include "LogServer.h"
+#include "RegistrationManager.h"
+
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QStringList>
 #include <QDebug>
+
 
 LoginServer::LoginServer(QObject* parent) : QTcpServer(parent) {
 	connect(this, &QTcpServer::newConnection, this, &LoginServer::handleNewConnection);
@@ -32,7 +33,15 @@ void LoginServer::readClientData() {
 	if (clientSocket) {
 		QByteArray data = clientSocket->readAll();
 		QStringList credentials = QString::fromUtf8(data).split(':');
-		if (credentials.size() == 2) {
+		if (credentials.size() == 1)
+		{
+			QString inviation = credentials.at(0);
+			QString date = RegistrationManager::Instance().GetlicenceExpirationDate(inviation.toStdString());
+
+			QByteArray response = "CHECK_LICENSE:" + date.toUtf8();
+			clientSocket->write(response);
+		}
+		else if (credentials.size() == 2) {
 			QString username = credentials.at(0);
 			QString password = credentials.at(1);
 			// Validate the credentials against your database or other storage
@@ -41,9 +50,18 @@ void LoginServer::readClientData() {
 			QByteArray response =  "LOGIN_SUCCESS:" + QString::number((int)level).toUtf8();
 			clientSocket->write(response);
 		}
+		else if (credentials.size() == 3)
+		{
+			QString username = credentials.at(0);
+			QString password = credentials.at(1);
+			QString invitation = credentials.at(2);
+			RegistrationManager::ErrorCode level = RegistrationManager::Instance().RegisterUsr(username, password,invitation);
+			QByteArray response = "REGISTER:" + QString::number((int)level).toUtf8();
+			clientSocket->write(response);
+		}
 		else
 		{
-			clientSocket->write("LOGIN_FAILED");
+			clientSocket->write("FAILED");
 		}
 	}
 }
@@ -53,17 +71,7 @@ AuthorizationLevel LoginServer::validateCredentials(const QString& username, con
 	// For example, you could check against a database or a predefined list of credentials
 	// Return true if the credentials are valid, false otherwise
 	// This is just a placeholder for the actual validation logic
-	if (username == "test" && password == "123456")
-	{
-		return AuthorizationLevel::AuthorizationLevel0;
-	}
-	else if (username == "eddy" && password == "Zwsoft2024")
-	{
-		return AuthorizationLevel::AuthorizationLevel1;
-	}
-	else if (username == "Zwsoft.developer" && password == "Zwsoft,.")
-	{
-		return AuthorizationLevel::AuthorizationLevel2;
-	}
-	return AuthorizationLevel::AuthorizationLevelInvalid;
+
+	AuthorizationLevel level = RegistrationManager::Instance().GetUsrLevel(username, password);
+	return level;
 }

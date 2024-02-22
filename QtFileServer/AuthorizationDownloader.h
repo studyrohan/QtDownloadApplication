@@ -4,7 +4,7 @@
 
 #include <QDebug>
 
-
+class QString;
 
 class AuthorizationDownloader : public QTcpServer {
 	Q_OBJECT
@@ -12,11 +12,15 @@ class AuthorizationDownloader : public QTcpServer {
 public:
 	AuthorizationDownloader(QObject* parent = nullptr);
 
+	QString encryptData(const QString& data, const QString& key);
+
+	QString decryptData(const QString& data, const QString& key);
 protected:
 	void incomingConnection(qintptr socketDescriptor) override;
 
 private slots:
 	void handleNewConnection();
+
 	void readClientData();
 
 };
