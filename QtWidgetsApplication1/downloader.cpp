@@ -10,6 +10,7 @@
 #include <QEventLoop>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QFileDialog>
 
 
 Downloader::Downloader(QObject* parent)
@@ -96,6 +97,19 @@ QByteArray Downloader::GetContext()const
     return m_context;
 }
 
+QString Downloader::DecryptData(const QString& data, const QString& key)
+{
+	QByteArray hash = QCryptographicHash::hash(key.toUtf8(), QCryptographicHash::Md5);
+	QByteArray decryptedData = QByteArray::fromHex(data.toUtf8());
+
+	for (int i = 0; i < decryptedData.size(); ++i)
+	{
+		decryptedData[i] = decryptedData[i] ^ hash.at(i % hash.size());
+	}
+
+	return QString(decryptedData);
+}
+
 void Downloader::ReplyFinished(QNetworkReply* reply)
 {
 	if (reply->error())
@@ -158,64 +172,182 @@ void Downloader::CreateLogFolder(const QString& path)
     }
 }
 
+void Downloader::SendFileByTcp(const QString& path)
+{
+    ClearResult();
+    QTcpSocket socket;
+
+    socket.connectToHost("127.0.0.1", 1234);
+    if (!socket.waitForConnected()) {
+        AppendResult("Failed to connect to server: " + socket.errorString());
+        return;
+    }
+
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Failed to open file for reading: " << file.errorString();
+        AppendResult("Failed to open file for reading: " + file.errorString());
+        return;
+    }
+
+    // Read the file data into a QByteArray
+    QByteArray fileData = file.readAll();
+	QFileInfo fileInfo(file);
+
+	//  获取文件名，不包含目录路径
+	QString fileName = fileInfo.fileName();
+    file.close();
+    socket.write(fileName.toLocal8Bit());
+    socket.write("\n");
+    // Write the file data to the socket
+    qint64 bytesWritten = socket.write(fileData);
+    if (bytesWritten == -1) {
+        qDebug() << "Failed to write file data to socket: " << socket.errorString();
+        AppendResult("Failed to write file data to socket: " + socket.errorString());
+        return;
+    }
+    socket.write("---boundary---");
+    // Flush the socket to ensure all data is sent
+    socket.flush();
+    // to deal with
+    if (!socket.waitForBytesWritten()) {
+        qDebug() << "Failed to flush socket: " << socket.errorString();
+        AppendResult("Failed to flush socket: " + socket.errorString());
+        return;
+    }
+    AppendResult("succeed!");
+}
+
+void Downloader::DownloadlicensFile(int level)
+{
+	ClearResult();
+	QString dir = QFileDialog::getExistingDirectory(nullptr, tr("Open Directory"), "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (dir.isEmpty())
+    {
+        return;
+    }
+	QTcpSocket socket;
+
+	socket.connectToHost("127.0.0.1", 1246);
+	if (!socket.waitForConnected()) {
+		AppendResult("Failed to connect to server: " + socket.errorString());
+		return;
+	}
+	// Send data
+	socket.write(std::to_string(level).c_str());
+	socket.flush();
+
+	// Wait for the reply
+	if (!socket.waitForReadyRead(5000)) {
+		qDebug() << "No reply from the server: " << socket.errorString();
+		return ;
+	}
+
+	// Read the reply
+	QByteArray reply = socket.readAll();
+    //do not change this key
+    const static QString key = "ertyu6789ghjkvbnm";
+    QString decrytReply = DecryptData(QString::fromUtf8(reply), key);
+	qDebug() << "Received reply: " << reply;
+    if (reply.size() == -1) {
+        qDebug() << "Failed to download license:" << socket.errorString();
+        AppendResult("Failed to download license: " + socket.errorString());
+        return;
+    }
+	QFile file(dir.append("/overdrivelicense.txt"));
+	if (!file.open(QIODevice::WriteOnly)) {
+		qDebug() << "Failed to open file for writing: " << file.errorString();
+		AppendResult("Failed to open file for writing: " + file.errorString());
+		return;
+	}
+    file.write(decrytReply.toUtf8());
+    file.flush();
+    file.close();
+    QMessageBox::information(NULL, "", "download license succeed");
+}
+
+void Downloader::SendFileByHttp(const QString& path)
+{
+	QEventLoop loop;
+	QFileInfo fileInfo(path);
+	QString fileName = fileInfo.fileName();
+	QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+	{
+		QHttpPart textPart;
+		textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"text\""));
+		textPart.setBody("Hello, this is a text field!");
+		//multiPart->append(textPart);
+	}
+	QHttpPart filePart;
+	ClearResult();
+
+	if (fileInfo.suffix() == "txt")
+	{
+		filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
+	}
+	else
+	{
+		filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/octet-stream"));
+	}
+	filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"filename\"; filename=\"" + fileName + "\""));
+	QFile* file = new QFile(path);
+	if (!file->open(QIODevice::ReadOnly))
+	{
+		AppendResult("File didn't open!");
+	}
+	else {
+
+		//filePart.setBodyDevice(file);
+		file->setParent(multiPart); // The file will be deleted with the multiPart
+		QByteArray fileContext = file->readAll();
+		int contextSize = fileContext.size();
+
+		QString str = QString::fromLocal8Bit(fileContext);
+		filePart.setBody(fileContext);
+		//file->close();
+		multiPart->append(filePart);
+		//multiPart->setBoundary("--boundary--");
+
+		//request post
+		//QUrl url = QString("http://192.168.8.222:8080/test/");
+		QUrl url = QString("http://localhost:1234/");
+
+		QNetworkRequest request;
+		request.setUrl(url);
+		request.setRawHeader("Content-Type", "multipart/form-data");
+		//qDebug()<< QByteArray::number(multiPart->boundary().length() + file->size());
+		//request.setRawHeader("Content-Length",QByteArray::number(file->size()));
+		//request.setRawHeader("Content-Length",QByteArray::number(multiPart->boundary().length()+file->size()));
+
+		QNetworkReply* reply = m_manager->post(request, multiPart);
+		//QNetworkReply* reply = m_manager->post(request, file);
+		multiPart->setParent(reply); //  设置reply为multiPart的父对象，这样当reply被删除时，multiPart也会被删除
+		qint64 contentLength = reply->header(QNetworkRequest::ContentLengthHeader).toLongLong();
+		connect(reply, &QNetworkReply::uploadProgress, this, &Downloader::DealProgress);
+		connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+		loop.exec();
+		if (reply->isFinished())
+		{
+			QNetworkReply::NetworkError err = reply->error();
+			if (err != QNetworkReply::NoError)
+			{
+				AppendResult("upload error:" + reply->errorString());
+			}
+			else
+			{
+				AppendResult(fileName + ": the Upload has finished!\n");
+			}
+			reply->deleteLater();
+			//UpdateLog(fileName, url.userName());
+		}
+	}
+}
+
 void Downloader::UploadLog(const QString& path)
 {
-    QEventLoop loop;
-    QFileInfo fileInfo(path);
-    QString fileName = fileInfo.fileName();
-    QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-    QHttpPart filePart;
-    ClearResult();
-    
-    if (fileInfo.suffix() == "txt")
-    {  
-        filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
-    }
-    else
-    {
-        filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/octet-stream"));
-    }
-    filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"filename\"; filename=\"" + fileName + "\""));
-    QFile* file = new QFile(path);
-    if (!file->open(QIODevice::ReadOnly))
-    {
-        AppendResult("File didn't open!");
-    }
-    else {
-        filePart.setBody(file->readAll());
-        file->setParent(multiPart);
-        file->close();
-        multiPart->append(filePart);
-        multiPart->setBoundary("i'm-a-boundary");
-
-        //request post
-        QUrl url = QString("http://192.168.8.222:8080/test/");
-        
-        QNetworkRequest request;
-        request.setUrl(url);
-        request.setRawHeader("Content-Type", "multipart/form-data");
-        qDebug()<< QByteArray::number(multiPart->boundary().length() + file->size());
-        request.setRawHeader("Content-Length",QByteArray::number( multiPart->boundary().length()+file->size()));
-        QNetworkReply* reply= m_manager->post(request, multiPart);
-        multiPart->setParent(reply);
-
-        connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        //connect(reply, &QNetworkReply::uploadProgress, this, &Downloader::DealProgress);
-        loop.exec();
-        if (reply->isFinished())
-        {
-            if (reply->error())
-            {
-                AppendResult("upload error:" + reply->errorString());
-            }
-            else
-            {
-                AppendResult(fileName + ": the Upload has finished!\n");             
-            }
-            reply->deleteLater();
-            //UpdateLog(fileName, url.userName());
-        }
-    }
+    return SendFileByTcp(path);
+    // we dont know how to deal with http request ,use tcp is much easier but my lack of information
+    //return SendFileByHttp(path);
 }
 
 QString Downloader::GetLocalIP()const
@@ -299,6 +431,6 @@ void Downloader::UpdateLog(const QString& fileName, const QString& userName)
 
 void Downloader::DealProgress(qint64 bytes, qint64 total)
 {
-    qreal progress = bytes * 100 / total ;
+    qreal progress = bytes * 100 / (total+0.1) ;
     emit updateProgress(bytes, total, progress);
 }

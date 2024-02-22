@@ -5,6 +5,8 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtWidgetsApplication1", "QtWidgetsApplication1\QtWidgetsApplication1.vcxproj", "{8CD788E4-97CF-4A1C-8BD9-F110AF908D25}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtFileServer", "QtFileServer\QtFileServer.vcxproj", "{C0604100-AB67-4C36-8649-03847E625552}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{8CD788E4-97CF-4A1C-8BD9-F110AF908D25}.Debug|x64.Build.0 = Debug|x64
 		{8CD788E4-97CF-4A1C-8BD9-F110AF908D25}.Release|x64.ActiveCfg = Release|x64
 		{8CD788E4-97CF-4A1C-8BD9-F110AF908D25}.Release|x64.Build.0 = Release|x64
+		{C0604100-AB67-4C36-8649-03847E625552}.Debug|x64.ActiveCfg = Debug|x64
+		{C0604100-AB67-4C36-8649-03847E625552}.Debug|x64.Build.0 = Debug|x64
+		{C0604100-AB67-4C36-8649-03847E625552}.Release|x64.ActiveCfg = Release|x64
+		{C0604100-AB67-4C36-8649-03847E625552}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

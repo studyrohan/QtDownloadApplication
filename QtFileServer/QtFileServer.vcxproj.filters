@@ -23,47 +23,36 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="QtWidgetsApplication1.qrc">
-      <Filter>Resource Files</Filter>
-    </QtRcc>
-    <QtUic Include="QtWidgetsApplication1.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtMoc Include="QtWidgetsApplication1.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <ClCompile Include="QtWidgetsApplication1.cpp">
+    <ClInclude Include="FileServer.h">
       <Filter>Source Files</Filter>
-    </ClCompile>
+    </ClInclude>
+    <ClInclude Include="AuthorizationLevel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RegistrationManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <QtMoc Include="main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="downloader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LoginWidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LoginClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="downloader.h">
+    </QtMoc>
+    <QtMoc Include="LogServer.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="LoginClient.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="LoginWidget.h">
+    <QtMoc Include="AuthorizationDownloader.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="todo.txt">
-      <Filter>Header Files</Filter>
-    </Text>
+    <ClCompile Include="AuthorizationDownloader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LogServer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegistrationManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

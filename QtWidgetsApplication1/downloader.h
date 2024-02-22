@@ -20,16 +20,19 @@ public:
 
     QList< QString>GetAllResource(QString url="");
     void DownloadResource(const QString& res,const QString& path);
-
     void DoDownload();
     void CreateLogFolder(const QString& path);
     void UploadLog(const QString &path);
+    void SendFileByTcp(const QString &path);
+    void DownloadlicensFile(int level);
+    void SendFileByHttp(const QString &path);
     QString GetLocalIP()const;
     QByteArray GetContext() const;
-
     void AppendResult(const QString& res){m_result .append(res);}
     void ClearResult(){m_result = "";}
     QString GetResult(){return m_result;}
+private:
+    QString DecryptData(const QString& data, const QString& key);
 signals:
     void updateProgress(qint64 receive, qint64 total, qreal progress);
 
