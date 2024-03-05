@@ -13,6 +13,11 @@
 #include <QFileDialog>
 
 
+
+QString g_DownloadPath = "http://192.168.139.39:8080";
+QString g_ServerPath = "127.0.0.1";
+
+
 Downloader::Downloader(QObject* parent)
     :QObject(parent)
 {
@@ -22,7 +27,7 @@ Downloader::Downloader(QObject* parent)
 QList< QString> Downloader::GetAllResource(QString url)
 {
     QList< QString>list;
-    QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl("http://192.168.8.222:8080/Overdrive/version.txt")));
+    QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl(g_DownloadPath +"/Overdrive/version.txt")));
 	QEventLoop eventLoop;
 	connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
 	eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
@@ -89,7 +94,7 @@ void Downloader::DoDownload()
     connect(m_manager, SIGNAL(finished(QNetworkReply*)),
         this, SLOT(ReplyFinished(QNetworkReply*)), Qt::DirectConnection);
 
-    m_manager->get(QNetworkRequest(QUrl("http://192.168.8.222:8080/Overdrive/version.txt")));
+    m_manager->get(QNetworkRequest(QUrl(g_DownloadPath+ "/Overdrive/version.txt")));
 }
 
 QByteArray Downloader::GetContext()const
@@ -145,7 +150,7 @@ void Downloader::CreateLogFolder(const QString& path)
     QEventLoop loop;
     QString folderName = GetLocalIP();
     QString folderPath = "C:/Users/Administrator/Desktop/test/myfolder";
-    QString url = QString("http://192.168.8.222:8080/test/upload");
+    QString url = QString(g_DownloadPath+"/test/upload");
     QNetworkRequest folderRequest(url);
     folderRequest.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));
     QString jsonData = QString("{\"folderName\":\"%1\",\"parentDirectory\":\"%2\"}")
@@ -175,18 +180,19 @@ void Downloader::CreateLogFolder(const QString& path)
 void Downloader::SendFileByTcp(const QString& path)
 {
     ClearResult();
+
+	QFile file(path);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << "Failed to open file for reading: " << file.errorString();
+		AppendResult("Failed to open file for reading: " + file.errorString());
+		return;
+	}
+
     QTcpSocket socket;
 
-    socket.connectToHost("127.0.0.1", 1234);
+    socket.connectToHost(g_ServerPath, 1234);
     if (!socket.waitForConnected()) {
         AppendResult("Failed to connect to server: " + socket.errorString());
-        return;
-    }
-
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Failed to open file for reading: " << file.errorString();
-        AppendResult("Failed to open file for reading: " + file.errorString());
         return;
     }
 
@@ -210,11 +216,11 @@ void Downloader::SendFileByTcp(const QString& path)
     // Flush the socket to ensure all data is sent
     socket.flush();
     // to deal with
-    if (!socket.waitForBytesWritten()) {
-        qDebug() << "Failed to flush socket: " << socket.errorString();
-        AppendResult("Failed to flush socket: " + socket.errorString());
-        return;
-    }
+    //if (!socket.waitForBytesWritten()) {
+    //    qDebug() << "Failed to flush socket: " << socket.errorString();
+    //    AppendResult("Failed to flush socket: " + socket.errorString());
+    //    return;
+    //}
     AppendResult("succeed!");
 }
 
@@ -228,7 +234,7 @@ void Downloader::DownloadlicensFile(int level)
     }
 	QTcpSocket socket;
 
-	socket.connectToHost("127.0.0.1", 1246);
+	socket.connectToHost(g_ServerPath, 1246);
 	if (!socket.waitForConnected()) {
 		AppendResult("Failed to connect to server: " + socket.errorString());
 		return;
@@ -254,16 +260,22 @@ void Downloader::DownloadlicensFile(int level)
         AppendResult("Failed to download license: " + socket.errorString());
         return;
     }
-	QFile file(dir.append("/overdrivelicense.txt"));
+	QFile file(dir.append("/overdrivelicense.h"));
 	if (!file.open(QIODevice::WriteOnly)) {
 		qDebug() << "Failed to open file for writing: " << file.errorString();
 		AppendResult("Failed to open file for writing: " + file.errorString());
 		return;
 	}
-    file.write(decrytReply.toUtf8());
+    QString str = "/* (C) Copyright 2023, ZWSOFT CO., LTD.(Guangzhou)All Rights Reserved.*/\n\
+#ifndef OVERDRIVE_LICENSE_DEFINED\n\
+#define OVERDRIVE_LICENSE_DEFINED\n\
+#define OVERDRIVE_LICENSE     \"code\"\n\
+#endif\n";
+    str.replace("code", decrytReply.toUtf8());
+    file.write(str.toUtf8());
     file.flush();
     file.close();
-    QMessageBox::information(NULL, "", "download license succeed");
+    QMessageBox::information(NULL, "", "download license succeed,please check the overdrivelicense.h file");
 }
 
 void Downloader::SendFileByHttp(const QString& path)
@@ -309,7 +321,6 @@ void Downloader::SendFileByHttp(const QString& path)
 		//multiPart->setBoundary("--boundary--");
 
 		//request post
-		//QUrl url = QString("http://192.168.8.222:8080/test/");
 		QUrl url = QString("http://localhost:1234/");
 
 		QNetworkRequest request;
@@ -367,7 +378,7 @@ QString Downloader::GetLocalIP()const
 void Downloader::UpdateLog(const QString& fileName, const QString& userName)
 {
     QEventLoop loop;
-    QString url = "http://192.168.8.222:8080/test/logs.txt";
+    QString url = g_DownloadPath+"/test/logs.txt";
     QNetworkRequest request(url);
     //request.setHeader(QNetworkRequest::ContentLengthHeader, QVariant(logResult.length()));
     //add to

@@ -21,6 +21,9 @@
       <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
       <Extensions>ts</Extensions>
     </Filter>
+    <Filter Include="Source Files\Log">
+      <UniqueIdentifier>{92b3dc6f-8d41-47b6-98ca-93fdfa0a740f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileServer.h">
@@ -31,6 +34,9 @@
     </ClInclude>
     <ClInclude Include="RegistrationManager.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Log\Log.h">
+      <Filter>Source Files\Log</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -53,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="RegistrationManager.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Log\Log.cpp">
+      <Filter>Source Files\Log</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
