@@ -3,6 +3,8 @@
 #include <QTcpSocket>
 #include <QStringList>
 #include <QCryptographicHash>
+#include <QDateTime>
+#include <QTimer>
 
 
 static const std::vector<std::string> gs_authorizationCode = { "3VKKZ85TA8QRNSJT3HK3EC5NE82CPNH39A2DKGHC3X7UPHJ87A7KDDTRTXS7KZT3PCVUVN"
@@ -48,8 +50,39 @@ void AuthorizationDownloader::incomingConnection(qintptr socketDescriptor)
 {
 	QTcpSocket* clientSocket = new QTcpSocket(this);
 	clientSocket->setSocketDescriptor(socketDescriptor);
-	connect(clientSocket, &QTcpSocket::readyRead, this, &AuthorizationDownloader::readClientData);
-	connect(clientSocket, &QTcpSocket::disconnected, clientSocket, &QTcpSocket::deleteLater);
+	QString ip = clientSocket->peerAddress().toString();
+	if (shouldAcceptConnection(ip))
+	{
+		connect(clientSocket, &QTcpSocket::readyRead, this, &AuthorizationDownloader::readClientData);
+		connect(clientSocket, &QTcpSocket::disconnected, clientSocket, &QTcpSocket::deleteLater);
+	}
+	else
+	{
+		qWarning() << "too much connection from" << ip;
+	}
+}
+
+bool AuthorizationDownloader::shouldAcceptConnection(const QString& ip)
+{
+	// 例如，每分钟最多10个请求
+	int maxRequestsPerMinute = 3;
+	QDateTime now = QDateTime::currentDateTime();
+	QString key = ip + now.toString("yyyyMMddHHmm");
+
+	if (!ipRequestCounts.contains(key)) {
+		ipRequestCounts[key] = 1;
+		QTimer::singleShot(60000, [this, key]() { // 1分钟后清除计数
+			ipRequestCounts.remove(key);
+			});
+		return true;
+	}
+	else if (ipRequestCounts[key] < maxRequestsPerMinute) {
+		ipRequestCounts[key]++;
+		return true;
+	}
+	else {
+		return false; // 超过限制
+	}
 }
 
 void AuthorizationDownloader::handleNewConnection()

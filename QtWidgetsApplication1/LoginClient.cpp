@@ -41,7 +41,7 @@ void LoginClient::readData() {
 	{
 		if (list.at(0) == "CHECK_LICENSE")
 		{
-			QMessageBox::information(NULL, "Check license", "License validity is : "+ list.at(1),
+			QMessageBox::information(NULL, "Check license", "license term is : "+ list.at(1),
 				QMessageBox::Yes, QMessageBox::Yes);
 		}
 		else if (list.at(0) == "LOGIN_SUCCESS")

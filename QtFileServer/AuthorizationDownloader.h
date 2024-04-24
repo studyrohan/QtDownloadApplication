@@ -18,10 +18,15 @@ public:
 protected:
 	void incomingConnection(qintptr socketDescriptor) override;
 
+private:
+	bool shouldAcceptConnection(const QString& ip);
+
 private slots:
 	void handleNewConnection();
 
 	void readClientData();
 
+private:
+	QMap<QString, int> ipRequestCounts;
 };
 

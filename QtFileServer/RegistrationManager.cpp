@@ -59,7 +59,7 @@ AuthorizationLevel RegistrationManager::GetUsrLevel(const QString& username, con
 	//   Check the result
 	if (query.next()) {
 		AuthorizationLevel level = (AuthorizationLevel)query.value(0).toInt();
-		qDebug() << "level for the username is:" << level;
+		qDebug() << QString("level for the {%1} is:").arg( username) << level;
 		return level;
 	}
 	else {

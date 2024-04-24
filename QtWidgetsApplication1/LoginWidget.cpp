@@ -13,6 +13,8 @@
 #include <QVBoxLayout>
 #include <QHostAddress>
 
+extern QString g_ServerPath;
+
 
 LoginWidget::LoginWidget(QDialog* parent) : QDialog(parent) {
     m_client = new LoginClient(this);
@@ -76,7 +78,7 @@ void LoginWidget::login() {
         QMessageBox::information(NULL, "", "please input password");
         return;
     }
-    m_client->connectToServer("127.0.0.1", 1245);
+    m_client->connectToServer(g_ServerPath, 1245);
     m_client->login(m_usernameField->text().trimmed(), m_passwordField->text().trimmed());
 
 }
@@ -98,7 +100,7 @@ void LoginWidget::Register()
 		QMessageBox::information(NULL, "", "please input Invitation code");
 		return;
 	}
-	m_client->connectToServer("127.0.0.1", 1245);
+	m_client->connectToServer(g_ServerPath, 1245);
 	m_client->Register(m_usernameField->text().trimmed(), m_passwordField->text().trimmed(),m_inviationField->text().trimmed());
 }
 
@@ -109,7 +111,7 @@ void LoginWidget::CheckLicense()
 		QMessageBox::information(NULL, "", "please input Invitation code");
 		return;
 	}
-	m_client->connectToServer("127.0.0.1", 1245);
+	m_client->connectToServer(g_ServerPath, 1245);
 	m_client->CheckLicense(m_inviationField->text().trimmed());
 }
 

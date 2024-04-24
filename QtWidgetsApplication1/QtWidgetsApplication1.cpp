@@ -18,6 +18,8 @@
 #include "downloader.h"
 #include "LoginWidget.h"
 
+extern QString g_DownloadPath;
+
 QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
     : QMainWindow(parent), m_isLogInlevel(-1)
 {
@@ -119,7 +121,7 @@ void QtWidgetsApplication1::DownLoadResult()
 			savePath = QFileDialog::getExistingDirectory(nullptr, "choose directory", QDir::currentPath());
 			if(!savePath.isEmpty())
 			{
-				QString url = QString::fromUtf8("http://192.168.8.222:8080/Overdrive/").append(name);
+				QString url = QString(g_DownloadPath+"/Overdrive/").append(name);
 				m_download->DownloadResource(url, savePath);
 				m_output->setText(m_download->GetResult());
 			}
@@ -161,12 +163,66 @@ void QtWidgetsApplication1::ShowResource()
 }
 void QtWidgetsApplication1::CheckSoftware()
 {
+	static const std::vector<QString> librarys = {
+		"ApiOd.dll",
+		"logging.dll",
+		"Modeller.dll",
+		"pskernel.dll",
+		"python3.dll",
+		"python37.dll",
+		"Render.dll",
+		"stlport.5.2.dll",
+		"STLportWrapper.dll",
+		"ZW3D_Base.dll",
+		"ZW3D_Blas.dll",
+		"ZW3D_Config.dll",
+		"ZW3D_Cons.dll",
+		"ZW3D_Core.dll",
+		"ZW3D_Db.dll",
+		"ZW3D_DimData.dll",
+		"ZW3D_Disp.dll",
+		"ZW3D_GeomCore.dll",
+		"ZW3D_Om.dll",
+		"ZW3D_Pin.dll",
+		"ZW3D_topo.dll",
+		//"xlator/ZW3D_Xlator_common.dll",
+		"xlator/ZW3D_Xlator_Iges2Vx.dll",
+		"xlator/ZW3D_Xlator_N2Vx.dll",
+		"xlator/ZW3D_Xlator_Step2Vx.dll",
+		"xlator/ZW3D_Xlator_Vx2Iges.dll",
+		"xlator/ZW3D_Xlator_Vx2N.dll",
+		"xlator/ZW3D_Xlator_Vx2Step.dll",
+		"xlator/ZW3D_Xlator_Vx2Stl.dll"
+	};
 	if (!GetIsLogIn())
 	{
 		QMessageBox::information(NULL, "Attention", "please log in");
 		return;
 	}
 	m_download->ClearResult();
+	QString folderPath = QFileDialog::getExistingDirectory(0, "choose overdrive directory", QDir::homePath());
+
+	if (folderPath.size() == 0)
+	{
+		m_output->setText("exmpty folder");
+		return;
+	}
+
+	for (auto &file:librarys)
+	{
+		QString fullFile = folderPath+QString("/OverdriveSDK/Kernel/Releasex64/").append(file);
+		QFile fullFileName(fullFile);
+		
+		if (!fullFileName.exists())
+		{
+			m_output->setText("lack of file:" + file);
+			return;
+			break;
+		}
+	}
+
+	m_output->setText("Complete package");
+	return;
 	//GET PROCESSID
 	HANDLE  hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (hSnapshot == INVALID_HANDLE_VALUE) {

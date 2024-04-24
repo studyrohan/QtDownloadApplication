@@ -1,6 +1,7 @@
 #include "FileServer.h"
 #include "widget.h"
 #include "LogServer.h"
+#include "Log/Log.h"
 #include "AuthorizationDownloader.h"
 #include <QtCore/QCoreApplication>
 #include <QApplication>
@@ -18,7 +19,35 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <QtNetwork/QNetworkInterface>
+#include <functional>
 
+
+class Non_copyable {
+private:
+    auto operator=(Non_copyable const&)->Non_copyable & = delete;
+    Non_copyable(Non_copyable const&) = delete;
+public:
+    auto operator=(Non_copyable&&)->Non_copyable & = default;
+    Non_copyable() = default;
+    Non_copyable(Non_copyable&&) = default;
+};
+
+class Scope_guard : public Non_copyable {
+private:
+    std::function<void()> m_cleanup;
+
+public:
+    friend void dismiss(Scope_guard& g) { g.m_cleanup = [] {}; }
+
+    ~Scope_guard() { m_cleanup(); }
+
+    template<class Func>
+    Scope_guard(Func const& cleanup) : m_cleanup(cleanup) {}
+
+    Scope_guard(Scope_guard&& other) : m_cleanup(move(other.m_cleanup)) {
+        dismiss(other);
+    }
+};
 
 
 class FileTransferSocket : public QTcpSocket {
@@ -189,20 +218,54 @@ private slots:
     void processRequestBaseTcp()
     {
         QDateTime currentDateTime = QDateTime::currentDateTime();
-
+        QDate date = currentDateTime.date();
+        QTime time = currentDateTime.time();
         //  输出当前时间
         qDebug() << "Current date and time:" << currentDateTime.toString("yyyy-MM-dd hh:mm:ss");
         QDir dir = QDir::currentPath();
+        QString originalPath = dir.absolutePath();
         if (!dir.exists("peerIpAddress"))
         {
             if (dir.mkdir("peerIpAddress")) {
+                qDebug() << "Folder created successfully.";
+                
+            }
+            else {
+                qDebug() << "Failed to create folder.";
+            }
+        }
+        dir.cd("peerIpAddress");
+        quint32 ipNum = this->peerAddress().toIPv4Address();
+        QString ip = QString::number(ipNum);
+
+        if (!dir.exists(ip))
+        {
+            if (dir.mkdir(ip)) {
                 qDebug() << "Folder created successfully.";
             }
             else {
                 qDebug() << "Failed to create folder.";
             }
         }
+        dir.cd(ip);
 
+        QString dateStr = QString("%0_%1_%2_%3_%4").arg(date.year()).arg(date.month()).arg(date.day()).arg(QString::number(time.hour())).arg(QString::number(time.minute()));
+        
+        if (!dir.exists(dateStr))
+        {
+            if (dir.mkdir(dateStr)) {
+                qDebug() << "Folder created successfully.";
+            }
+            else {
+                qDebug() << "Failed to create folder.";
+            }
+        }
+        dir.cd(dateStr);
+        QDir::setCurrent(dir.absolutePath());
+        Scope_guard gurad([&]()
+            {
+                QDir::setCurrent(originalPath);
+        });
         if (m_localFile == nullptr)
         {
             m_localFile = new QFile(this);
@@ -268,6 +331,8 @@ int main(int argc, char* argv[]) {
         qDebug() << "Unable to start the server:" << authorizationServer.errorString();
         return -1;
     }
+
+    qInstallMessageHandler(outputMessage);
     
     return app.exec();
 }
