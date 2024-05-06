@@ -11,6 +11,12 @@
 #include <QFile>
 #include <QDebug>
 
+static const std::vector<std::string> gs_authorizationCode = { "3VKKZ85TA8QRNSJT3HK3EC5NE82CPNH39A2DKGHC3X7UPHJ87A7KDDTRTXS7KZT3PCVUVN"
+                                                "ME3LLCNJP33XMC2NPA78LUNGJQ7RADM8TWWCTD2AP7", //guochuang license
+                                                "NCMD2D5EK8JDNAMCPACZGNJZ98HDEDPFJA7ZGCMLR8LZKWHAVAVDMZH57RXD2GMUHXMDPC"
+                                                "TCRA8ZPAJAR3K3AZH8VRRZAZ5US8NRGJN7QH2CSS2J",
+                                                "KERDFE2B3HJKZ85NQR3FWN2H7V8FFQDFA3D3A8JUVGJLDAHNN8QKEZ5FN8CNEQDQ3GNMMZ"
+                                                "22PEQKVQZV9CMUFE8UR3K3AUJNRV6MWEPDRGMLUY8B" };
 
 class Downloader : public QObject
 {
@@ -19,17 +25,24 @@ public:
     explicit Downloader(QObject* parent = 0);
 
     QList< QString>GetAllResource(QString url="");
-    void DownloadResource(const QString& res,const QString& path);
-
+    void DownloadResource(const QString& res, const QString& path);
     void DoDownload();
     void CreateLogFolder(const QString& path);
     void UploadLog(const QString &path);
+    void SendFileByTcp(const QString &path);
+    void DownloadlicensFile(int level);
+    void ExtractResource(const QString& archiveFilePath, const QString& extractPath);
+    void UpdatePackage();
+    bool moveDirectory(const QString& sourceDirPath, const QString& destinationDirPath);
+    void VerifylicenseFile(int level);
+    void SendFileByHttp(const QString &path);
     QString GetLocalIP()const;
     QByteArray GetContext() const;
-
     void AppendResult(const QString& res){m_result .append(res);}
     void ClearResult(){m_result = "";}
     QString GetResult(){return m_result;}
+private:
+    QString DecryptData(const QString& data, const QString& key);
 signals:
     void updateProgress(qint64 receive, qint64 total, qreal progress);
 
@@ -40,6 +53,7 @@ public slots:
 private:
     QNetworkAccessManager* m_manager;
     QByteArray m_context;
+    QString latestVersion;
     QString m_result;
 };
 
