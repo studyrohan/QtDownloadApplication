@@ -21,8 +21,11 @@
 #include <QTextStream>
 #include "downloader.h"
 #include "LoginWidget.h"
+<<<<<<< HEAD
 
 extern QString g_DownloadPath;
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 
 QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
     : QMainWindow(parent), m_isLogInlevel(-1)
@@ -69,7 +72,10 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	//layout->addWidget(m_line);
 	layout->addWidget(m_resTable);
 	layout->addWidget(m_downloadLicenseButton);
+<<<<<<< HEAD
 	layout->addWidget(m_checkbutton);
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 	layout->addWidget(m_button5);
 	layout->addWidget(m_button6);
 	layout->addWidget(m_progressBar);
@@ -88,9 +94,14 @@ void QtWidgetsApplication1::StartDownLoad()
 		QMessageBox::information(NULL, "Attention", "please log in");
 		return;
 	}
+<<<<<<< HEAD
 	m_download->DoDownload();//download latestversion txt
 	UpDateResult();//download new package
 	m_download->UpdatePackage();//update
+=======
+	m_download->DoDownload();
+
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 }
 
 void QtWidgetsApplication1::ShowDownLoadResult()
@@ -107,6 +118,7 @@ void QtWidgetsApplication1::ShowDownLoadResult()
 	m_line->setText(context);
 }
 
+<<<<<<< HEAD
 void QtWidgetsApplication1::UpDateResult()
 {
 	m_progressBar->reset();
@@ -136,6 +148,8 @@ void QtWidgetsApplication1::UpDateResult()
 	}
 }
 
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 void QtWidgetsApplication1::DownLoadResult()
 {
 	//get the button row
@@ -200,6 +214,7 @@ void QtWidgetsApplication1::ShowResource()
 }
 void QtWidgetsApplication1::CheckSoftware()
 {
+<<<<<<< HEAD
 	static const std::vector<QString> librarys = {
 		"ApiOd.dll",
 		"logging.dll",
@@ -231,6 +246,8 @@ void QtWidgetsApplication1::CheckSoftware()
 		"xlator/ZW3D_Xlator_Vx2Step.dll",
 		"xlator/ZW3D_Xlator_Vx2Stl.dll"
 	};
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 	if (!GetIsLogIn())
 	{
 		QMessageBox::information(NULL, "Attention", "please log in");
@@ -345,9 +362,12 @@ void QtWidgetsApplication1::InitSlots()
 
 	connect(m_loginButton,SIGNAL(clicked()), this, SLOT(showLogin()));
 	connect(m_downloadLicenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
+<<<<<<< HEAD
 	//
 	connect(m_checkbutton, SIGNAL(clicked()), this, SLOT(VerifyLicense()));
 	//
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 	connect(m_button1,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
 	connect(m_button2,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
 	connect(m_button3,SIGNAL(clicked()), this, SLOT(ShowResource()));
@@ -376,6 +396,7 @@ void QtWidgetsApplication1::DownloadLicense()
 	}
 }
 
+<<<<<<< HEAD
 void QtWidgetsApplication1::VerifyLicense()
 {
 	if (m_isLogInlevel >= 0 && m_isLogInlevel <= 3)
@@ -389,6 +410,8 @@ void QtWidgetsApplication1::VerifyLicense()
 	}
 }
 
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 void QtWidgetsApplication1::showLogin()
 {
 	m_loginWidget->show();

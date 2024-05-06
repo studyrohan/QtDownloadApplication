@@ -31,10 +31,14 @@ private slots:
     void CheckSoftware();
     void SendLog();
     void ShowProgress(qint64 received,qint64 total,qreal progress);
+<<<<<<< HEAD
     //
     void VerifyLicense();
     void UpDateResult();
      //
+=======
+
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     void DownloadLicense();
     void showLogin();
     void SetLogIn(int);

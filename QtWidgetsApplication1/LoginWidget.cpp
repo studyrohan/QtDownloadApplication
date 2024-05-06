@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 #include "LoginWidget.h"
 #include "LoginClient.h"
 #include <QTcpSocket>
@@ -11,8 +16,11 @@
 #include <QVBoxLayout>
 #include <QHostAddress>
 
+<<<<<<< HEAD
 extern QString g_ServerPath;
 
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 
 LoginWidget::LoginWidget(QDialog* parent) : QDialog(parent) {
     m_client = new LoginClient(this);
@@ -76,7 +84,11 @@ void LoginWidget::login() {
         QMessageBox::information(NULL, "", "please input password");
         return;
     }
+<<<<<<< HEAD
     m_client->connectToServer(g_ServerPath, 1245);
+=======
+    m_client->connectToServer("127.0.0.1", 1245);
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     m_client->login(m_usernameField->text().trimmed(), m_passwordField->text().trimmed());
 
 }
@@ -98,7 +110,11 @@ void LoginWidget::Register()
 		QMessageBox::information(NULL, "", "please input Invitation code");
 		return;
 	}
+<<<<<<< HEAD
 	m_client->connectToServer(g_ServerPath, 1245);
+=======
+	m_client->connectToServer("127.0.0.1", 1245);
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 	m_client->Register(m_usernameField->text().trimmed(), m_passwordField->text().trimmed(),m_inviationField->text().trimmed());
 }
 
@@ -109,11 +125,18 @@ void LoginWidget::CheckLicense()
 		QMessageBox::information(NULL, "", "please input Invitation code");
 		return;
 	}
+<<<<<<< HEAD
 	m_client->connectToServer(g_ServerPath, 1245);
 	m_client->CheckLicense(m_inviationField->text().trimmed());
 }
 
 
+=======
+	m_client->connectToServer("127.0.0.1", 1245);
+	m_client->CheckLicense(m_inviationField->text().trimmed());
+}
+
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 void LoginWidget::cancel() {
     this->close();
     emit cancelClicked();

@@ -1,7 +1,10 @@
 #include "FileServer.h"
 #include "widget.h"
 #include "LogServer.h"
+<<<<<<< HEAD
 #include "Log/Log.h"
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 #include "AuthorizationDownloader.h"
 #include <QtCore/QCoreApplication>
 #include <QApplication>
@@ -19,6 +22,7 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <QtNetwork/QNetworkInterface>
+<<<<<<< HEAD
 #include <functional>
 
 
@@ -49,6 +53,10 @@ public:
     }
 };
 
+=======
+
+
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 
 class FileTransferSocket : public QTcpSocket {
     Q_OBJECT
@@ -218,22 +226,33 @@ private slots:
     void processRequestBaseTcp()
     {
         QDateTime currentDateTime = QDateTime::currentDateTime();
+<<<<<<< HEAD
         QDate date = currentDateTime.date();
         QTime time = currentDateTime.time();
         //  输出当前时间
         qDebug() << "Current date and time:" << currentDateTime.toString("yyyy-MM-dd hh:mm:ss");
         QDir dir = QDir::currentPath();
         QString originalPath = dir.absolutePath();
+=======
+
+        //  输出当前时间
+        qDebug() << "Current date and time:" << currentDateTime.toString("yyyy-MM-dd hh:mm:ss");
+        QDir dir = QDir::currentPath();
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
         if (!dir.exists("peerIpAddress"))
         {
             if (dir.mkdir("peerIpAddress")) {
                 qDebug() << "Folder created successfully.";
+<<<<<<< HEAD
                 
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
             }
             else {
                 qDebug() << "Failed to create folder.";
             }
         }
+<<<<<<< HEAD
         dir.cd("peerIpAddress");
         quint32 ipNum = this->peerAddress().toIPv4Address();
         QString ip = QString::number(ipNum);
@@ -266,6 +285,9 @@ private slots:
             {
                 QDir::setCurrent(originalPath);
         });
+=======
+
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
         if (m_localFile == nullptr)
         {
             m_localFile = new QFile(this);
@@ -331,8 +353,11 @@ int main(int argc, char* argv[]) {
         qDebug() << "Unable to start the server:" << authorizationServer.errorString();
         return -1;
     }
+<<<<<<< HEAD
 
     qInstallMessageHandler(outputMessage);
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     
     return app.exec();
 }

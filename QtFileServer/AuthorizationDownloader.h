@@ -18,15 +18,21 @@ public:
 protected:
 	void incomingConnection(qintptr socketDescriptor) override;
 
+<<<<<<< HEAD
 private:
 	bool shouldAcceptConnection(const QString& ip);
 
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 private slots:
 	void handleNewConnection();
 
 	void readClientData();
 
+<<<<<<< HEAD
 private:
 	QMap<QString, int> ipRequestCounts;
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 };
 

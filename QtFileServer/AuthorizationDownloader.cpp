@@ -3,8 +3,11 @@
 #include <QTcpSocket>
 #include <QStringList>
 #include <QCryptographicHash>
+<<<<<<< HEAD
 #include <QDateTime>
 #include <QTimer>
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 
 
 static const std::vector<std::string> gs_authorizationCode = { "3VKKZ85TA8QRNSJT3HK3EC5NE82CPNH39A2DKGHC3X7UPHJ87A7KDDTRTXS7KZT3PCVUVN"
@@ -50,6 +53,7 @@ void AuthorizationDownloader::incomingConnection(qintptr socketDescriptor)
 {
 	QTcpSocket* clientSocket = new QTcpSocket(this);
 	clientSocket->setSocketDescriptor(socketDescriptor);
+<<<<<<< HEAD
 	QString ip = clientSocket->peerAddress().toString();
 	if (shouldAcceptConnection(ip))
 	{
@@ -83,6 +87,10 @@ bool AuthorizationDownloader::shouldAcceptConnection(const QString& ip)
 	else {
 		return false; // ³¬¹ýÏÞÖÆ
 	}
+=======
+	connect(clientSocket, &QTcpSocket::readyRead, this, &AuthorizationDownloader::readClientData);
+	connect(clientSocket, &QTcpSocket::disconnected, clientSocket, &QTcpSocket::deleteLater);
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 }
 
 void AuthorizationDownloader::handleNewConnection()
@@ -92,7 +100,10 @@ void AuthorizationDownloader::handleNewConnection()
 	{
 		return;
 	}
+<<<<<<< HEAD
 	
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 	qDebug() << "New connection from" << clientSocket->peerAddress().toString();
 }
 

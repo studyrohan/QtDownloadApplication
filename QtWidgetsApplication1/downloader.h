@@ -25,16 +25,23 @@ public:
     explicit Downloader(QObject* parent = 0);
 
     QList< QString>GetAllResource(QString url="");
+<<<<<<< HEAD
     void DownloadResource(const QString& res, const QString& path);
+=======
+    void DownloadResource(const QString& res,const QString& path);
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     void DoDownload();
     void CreateLogFolder(const QString& path);
     void UploadLog(const QString &path);
     void SendFileByTcp(const QString &path);
     void DownloadlicensFile(int level);
+<<<<<<< HEAD
     void ExtractResource(const QString& archiveFilePath, const QString& extractPath);
     void UpdatePackage();
     bool moveDirectory(const QString& sourceDirPath, const QString& destinationDirPath);
     void VerifylicenseFile(int level);
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     void SendFileByHttp(const QString &path);
     QString GetLocalIP()const;
     QByteArray GetContext() const;

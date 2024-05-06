@@ -104,9 +104,12 @@
   <ItemGroup>
     <QtMoc Include="LoginWidget.h" />
   </ItemGroup>
+<<<<<<< HEAD
   <ItemGroup>
     <ClInclude Include="..\QtFileServer\AuthorizationLevel.h" />
   </ItemGroup>
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
     <Import Project="$(QtMsBuild)\qt.targets" />

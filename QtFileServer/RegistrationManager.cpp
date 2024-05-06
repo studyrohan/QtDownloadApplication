@@ -59,7 +59,11 @@ AuthorizationLevel RegistrationManager::GetUsrLevel(const QString& username, con
 	//   Check the result
 	if (query.next()) {
 		AuthorizationLevel level = (AuthorizationLevel)query.value(0).toInt();
+<<<<<<< HEAD
 		qDebug() << QString("level for the {%1} is:").arg( username) << level;
+=======
+		qDebug() << "level for the username is:" << level;
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 		return level;
 	}
 	else {
@@ -166,8 +170,13 @@ std::map<std::string, AuthorizationLevel> RegistrationManager::s_invationToLevel
 std::map<AuthorizationLevel, QString> RegistrationManager::s_LevelToTime =
 {
 
+<<<<<<< HEAD
 	{AuthorizationLevel::AuthorizationLevel0, QDate(2024,8,30).toString("yyyy-MM-dd")},
 	{AuthorizationLevel::AuthorizationLevel1, QDate(2024,12,30).toString("yyyy-MM-dd")},
+=======
+	{AuthorizationLevel::AuthorizationLevel0, QDate(2024, 8,30).toString()},
+	{AuthorizationLevel::AuthorizationLevel1, QDate(2024, 12,30).toString()},
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 	{AuthorizationLevel::AuthorizationLevel2, "permanent"}
 };
 

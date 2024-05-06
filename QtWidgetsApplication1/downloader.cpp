@@ -12,7 +12,10 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QFileDialog>
+<<<<<<< HEAD
 #include <QPRocess>
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 
 //192.168.8.222:8080  --192.168.139.39:8080
 //http://nicky4.gnway.cc:80 --kjs
@@ -286,6 +289,7 @@ void Downloader::CreateLogFolder(const QString& path)
 void Downloader::SendFileByTcp(const QString& path)
 {
     ClearResult();
+<<<<<<< HEAD
 
 	QFile file(path);
 	if (!file.open(QIODevice::ReadOnly)) {
@@ -297,11 +301,26 @@ void Downloader::SendFileByTcp(const QString& path)
     QTcpSocket socket;
 
     socket.connectToHost(g_ServerPath, 1234);
+=======
+    QTcpSocket socket;
+
+    socket.connectToHost("127.0.0.1", 1234);
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     if (!socket.waitForConnected()) {
         AppendResult("Failed to connect to server: " + socket.errorString());
         return;
     }
 
+<<<<<<< HEAD
+=======
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Failed to open file for reading: " << file.errorString();
+        AppendResult("Failed to open file for reading: " + file.errorString());
+        return;
+    }
+
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     // Read the file data into a QByteArray
     QByteArray fileData = file.readAll();
 	QFileInfo fileInfo(file);
@@ -322,6 +341,7 @@ void Downloader::SendFileByTcp(const QString& path)
     // Flush the socket to ensure all data is sent
     socket.flush();
     // to deal with
+<<<<<<< HEAD
     //if (!socket.waitForBytesWritten()) {
     //    qDebug() << "Failed to flush socket: " << socket.errorString();
     //    AppendResult("Failed to flush socket: " + socket.errorString());
@@ -335,10 +355,25 @@ void Downloader::DownloadlicensFile(int level)
 {
     ClearResult();
     QString dir = QFileDialog::getExistingDirectory(nullptr, tr("Open Directory"), "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+=======
+    if (!socket.waitForBytesWritten()) {
+        qDebug() << "Failed to flush socket: " << socket.errorString();
+        AppendResult("Failed to flush socket: " + socket.errorString());
+        return;
+    }
+    AppendResult("succeed!");
+}
+
+void Downloader::DownloadlicensFile(int level)
+{
+	ClearResult();
+	QString dir = QFileDialog::getExistingDirectory(nullptr, tr("Open Directory"), "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
     if (dir.isEmpty())
     {
         return;
     }
+<<<<<<< HEAD
 
     QString currentDir = QDir::currentPath();
 
@@ -471,6 +506,46 @@ void Downloader::VerifylicenseFile(int level)
             QMessageBox::Yes, QMessageBox::Yes);
     }
     else QMessageBox::information(NULL,"Warning","verification failure!\nplease replace license!");
+=======
+	QTcpSocket socket;
+
+	socket.connectToHost("127.0.0.1", 1246);
+	if (!socket.waitForConnected()) {
+		AppendResult("Failed to connect to server: " + socket.errorString());
+		return;
+	}
+	// Send data
+	socket.write(std::to_string(level).c_str());
+	socket.flush();
+
+	// Wait for the reply
+	if (!socket.waitForReadyRead(5000)) {
+		qDebug() << "No reply from the server: " << socket.errorString();
+		return ;
+	}
+
+	// Read the reply
+	QByteArray reply = socket.readAll();
+    //do not change this key
+    const static QString key = "ertyu6789ghjkvbnm";
+    QString decrytReply = DecryptData(QString::fromUtf8(reply), key);
+	qDebug() << "Received reply: " << reply;
+    if (reply.size() == -1) {
+        qDebug() << "Failed to download license:" << socket.errorString();
+        AppendResult("Failed to download license: " + socket.errorString());
+        return;
+    }
+	QFile file(dir.append("/overdrivelicense.txt"));
+	if (!file.open(QIODevice::WriteOnly)) {
+		qDebug() << "Failed to open file for writing: " << file.errorString();
+		AppendResult("Failed to open file for writing: " + file.errorString());
+		return;
+	}
+    file.write(decrytReply.toUtf8());
+    file.flush();
+    file.close();
+    QMessageBox::information(NULL, "", "download license succeed");
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 }
 
 void Downloader::SendFileByHttp(const QString& path)
@@ -516,6 +591,10 @@ void Downloader::SendFileByHttp(const QString& path)
 		//multiPart->setBoundary("--boundary--");
 
 		//request post
+<<<<<<< HEAD
+=======
+		//QUrl url = QString("http://192.168.8.222:8080/test/");
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 		QUrl url = QString("http://localhost:1234/");
 
 		QNetworkRequest request;

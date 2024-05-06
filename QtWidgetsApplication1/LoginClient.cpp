@@ -1,6 +1,9 @@
 #include "LoginClient.h"
 #include <QMessageBox>
+<<<<<<< HEAD
 #include <QDate>
+=======
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 
 LoginClient::LoginClient(QObject* parent) : QObject(parent) {
 	m_tcpClient = new QTcpSocket(this);
@@ -42,6 +45,7 @@ void LoginClient::readData() {
 	{
 		if (list.at(0) == "CHECK_LICENSE")
 		{
+<<<<<<< HEAD
 			QString licenseDate = list.at(1);
 			QString title = "Check license";
 			QString message = "license term is : ";
@@ -54,6 +58,9 @@ void LoginClient::readData() {
 			}
 			//ÏÔÊ¾
 			QMessageBox::information(NULL, title, message,
+=======
+			QMessageBox::information(NULL, "Check license", "License validity is : "+ list.at(1),
+>>>>>>> f6348b744c8929594a95d06698e6552b3d329b46
 				QMessageBox::Yes, QMessageBox::Yes);
 		}
 		else if (list.at(0) == "LOGIN_SUCCESS")
