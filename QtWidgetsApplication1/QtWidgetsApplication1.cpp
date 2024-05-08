@@ -32,6 +32,7 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	m_button1 = new QPushButton("update installation package");
 	m_button2 = new QPushButton("get result");
 	m_button3 = new QPushButton("show resources");
+	m_checkbutton = new QPushButton("verify license");
 	m_line = new QTextEdit("to update");
 	m_line->setReadOnly(true);
 	m_resTable = new QTableWidget();
@@ -57,13 +58,14 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	scrollBar->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 	this->resize(500,500);
 	
-	//layout->addWidget(m_button1);
-	//layout->addWidget(m_button2);
 	layout->addWidget(m_loginButton);
+	//layout->addWidget(m_button2);
 	layout->addWidget(m_button3);
 	//layout->addWidget(m_line);
 	layout->addWidget(m_resTable);
+	layout->addWidget(m_button1);
 	layout->addWidget(m_downloadLicenseButton);
+	layout->addWidget(m_checkbutton);
 	layout->addWidget(m_button5);
 	layout->addWidget(m_button6);
 	layout->addWidget(m_progressBar);
@@ -83,8 +85,9 @@ void QtWidgetsApplication1::StartDownLoad()
 		return;
 	}
 	m_download->DoDownload();
-
+	connect(m_download, &Downloader::getdone, this, &QtWidgetsApplication1::UpDateResult,Qt::UniqueConnection);
 }
+
 void QtWidgetsApplication1::ShowDownLoadResult()
 {
 	QByteArray context = m_download->GetContext();
@@ -136,6 +139,42 @@ void QtWidgetsApplication1::DownLoadResult()
 		}
 	}
 }
+void QtWidgetsApplication1::UpDateResult()
+{
+	disconnect(m_download, &Downloader::getdone, this, &QtWidgetsApplication1::UpDateResult);
+	m_progressBar->reset();
+	m_progressBar->setVisible(true);
+
+	QString latestVersion = QString::fromUtf8(m_download->GetContext());
+	QString savePath;
+	savePath = QFileDialog::getExistingDirectory(nullptr, "choose directory", QDir::currentPath());
+	try {
+		if (!savePath.isEmpty())
+		{
+			QDir dir(savePath);
+			if (!dir.exists("temp")) {
+				dir.mkdir("temp");
+			}
+			QString tempPath = savePath + "/temp";
+			QString url = QString(g_DownloadPath + "/Overdrive/").append(latestVersion);
+			m_download->DownloadResource(url, tempPath);
+			m_output->setText(m_download->GetResult());
+		}
+		else
+		{
+			m_output->setText("The file path error");
+			QMessageBox::critical(nullptr, "error", "the file path error");
+			return;
+		}
+	}
+	catch (std::exception e)
+	{
+		m_output->setText(e.what());
+		QDir dir(savePath + "/temp");
+		dir.removeRecursively();
+	}
+	m_download->UpdatePackage(savePath);
+}
 void QtWidgetsApplication1::ShowResource()
 {
 	//List 
@@ -150,7 +189,7 @@ void QtWidgetsApplication1::ShowResource()
 	m_resTable->setRowCount(resource.size());
 	
 	m_resTable->setColumnWidth(0, 300);
-	for (int i =0;i< resource.size();i++)
+	for (int i = 0; i < resource.size(); i++)
 	{
 		QTableWidgetItem* resouceItem = new QTableWidgetItem();
 		resouceItem->setText(resource[i]);
@@ -243,7 +282,7 @@ void QtWidgetsApplication1::CheckSoftware()
 		{
 			clock_t start,end;
 			start = clock();
-			std::string result = converter->to_bytes(pe.szExeFile);
+			std::string result;// = converter->to_bytes(pe.szExeFile);
 
 			if (std::strcmp(result.c_str(), "ODTestTool.exe") == 0)
 			{
@@ -280,7 +319,7 @@ void QtWidgetsApplication1::CheckSoftware()
 	}
 	std::string result;
 	do {
-		std::string name = converter->to_bytes(me.szModule);
+		std::string name;// = converter->to_bytes(me.szModule);
 		result += "Module Name: " + name +"\n";
 	} while (Module32Next(hSnapshot, &me));
 	m_output->setText(result.c_str());
@@ -308,6 +347,7 @@ void QtWidgetsApplication1::InitSlots()
 
 	connect(m_loginButton,SIGNAL(clicked()), this, SLOT(showLogin()));
 	connect(m_downloadLicenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
+	connect(m_checkbutton, SIGNAL(clicked()), this, SLOT(VerifyLicense()));
 	connect(m_button1,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
 	connect(m_button2,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
 	connect(m_button3,SIGNAL(clicked()), this, SLOT(ShowResource()));
@@ -328,6 +368,19 @@ void QtWidgetsApplication1::DownloadLicense()
 	if (m_isLogInlevel >= 0 && m_isLogInlevel <= 3)
 	{
 		m_download->DownloadlicensFile(m_isLogInlevel);
+	}
+	else
+	{
+		QMessageBox::information(NULL, "Attention", "please log in");
+		return;
+	}
+}
+
+void QtWidgetsApplication1::VerifyLicense()
+{
+	if (m_isLogInlevel >= 0 && m_isLogInlevel <= 3)
+	{
+		m_download->VerifylicenseFile();
 	}
 	else
 	{

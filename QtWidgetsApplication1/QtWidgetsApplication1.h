@@ -25,8 +25,10 @@ signals:
 private slots:
     void ShowDownLoadResult();
     void DownLoadResult();
+    void UpDateResult();
     void StartDownLoad();
     void ShowResource();
+    void VerifyLicense();
     //to do 
     void CheckSoftware();
     void SendLog();
@@ -47,6 +49,7 @@ private:
     QPushButton* m_button4;
     QPushButton* m_button5;
     QPushButton* m_button6;
+    QPushButton* m_checkbutton;
     QTextEdit* m_line;
     QLabel* m_output;
     QProgressBar* m_progressBar;

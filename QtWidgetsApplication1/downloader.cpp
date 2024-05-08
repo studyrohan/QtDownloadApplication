@@ -11,12 +11,14 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QFileDialog>
+#include <qprocess.h>
+#include <QDirIterator>
 
-
-
-QString g_DownloadPath = "http://192.168.139.39:8080";
+//192.168.139.39
+//110.41.63.246:8080
+QString g_DownloadPath = "http://110.41.63.246:8080";
 QString g_ServerPath = "127.0.0.1";
-
 
 Downloader::Downloader(QObject* parent)
     :QObject(parent)
@@ -27,7 +29,7 @@ Downloader::Downloader(QObject* parent)
 QList< QString> Downloader::GetAllResource(QString url)
 {
     QList< QString>list;
-    QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl(g_DownloadPath +"/Overdrive/version.txt")));
+    QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl(g_DownloadPath +"/version.txt")));
 	QEventLoop eventLoop;
 	connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
 	eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
@@ -85,16 +87,38 @@ void Downloader::DownloadResource(const QString& res, const QString& path)
     {
         AppendResult( "File Error"+ QString(e.what())+'\n');
     }
+    //extract
+    QString archiveFilePath = path + "/" + filename;
+    QString extractpath = path;
+    ExtractResource(archiveFilePath, extractpath);
 }
 
+void Downloader::ExtractResource(const QString& archiveFilePath, const QString& extractPath)
+{
+    QString sevenZipPath = QDir::currentPath() + "/7z.exe";
+    QProcess process;
+    QStringList arguments;
+    arguments << "x" << "-o" + extractPath << archiveFilePath;
+    process.start(sevenZipPath, arguments);
+    process.waitForFinished();
+
+    if (process.exitCode() == 0)
+    {
+        AppendResult("Extract successfully");
+    }
+        
+    else
+    {
+        AppendResult("Extract failed!");
+    }
+}
 
 void Downloader::DoDownload()
 {
     m_context.clear();
     connect(m_manager, SIGNAL(finished(QNetworkReply*)),
-        this, SLOT(ReplyFinished(QNetworkReply*)), Qt::DirectConnection);
-
-    m_manager->get(QNetworkRequest(QUrl(g_DownloadPath+ "/Overdrive/version.txt")));
+        this, SLOT(ReplyFinished(QNetworkReply*)), Qt::UniqueConnection);
+    m_manager->get(QNetworkRequest(QUrl(g_DownloadPath+ "/version.txt")));
 }
 
 QByteArray Downloader::GetContext()const
@@ -117,12 +141,14 @@ QString Downloader::DecryptData(const QString& data, const QString& key)
 
 void Downloader::ReplyFinished(QNetworkReply* reply)
 {
+    disconnect(m_manager, SIGNAL(finished(QNetworkReply*)),
+        this, SLOT(ReplyFinished(QNetworkReply*)));
 	if (reply->error())
 	{
 		qDebug() << "ERROR!";
 		qDebug() << reply->errorString();
 	}
-	else
+    else
     {
         qDebug() << reply->header(QNetworkRequest::ContentTypeHeader).toString();
         qDebug() << reply->header(QNetworkRequest::LastModifiedHeader).toDateTime().toString();;
@@ -130,18 +156,81 @@ void Downloader::ReplyFinished(QNetworkReply* reply)
         qDebug() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         qDebug() << reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 
-        QFile* file = new QFile("downloaded.txt");
-        if (file->open(QFile::ReadWrite))
+       m_context = reply->readAll();
+    }
+    reply->deleteLater();
+    emit getdone();
+}
+
+void Downloader::UpdatePackage(const QString& savePath)
+{
+
+    QString localPackage(savePath + "/OverdriveSDK");
+    QString latest(savePath + "/temp/OverdriveSDK");
+    if (!QFile::exists(localPackage))
+    {
+        if (!moveDirectory(latest, savePath))
         {
-            m_context = reply->readAll();
-            file->write(m_context);
-            file->flush();
-            file->close();
+            qDebug() << "move failed" << endl;
         }
-        delete file;
+        QString tempPath = savePath + "/temp";
+        QDir dir(tempPath);
+        dir.removeRecursively();
+        QMessageBox::information(nullptr, "update", "update successfully, please check the package");
+    }
+    
+    else
+    {
+        QString backupPackage(savePath + "/backup");
+        QDir saveDir(savePath);
+        QDir backupDir(backupPackage);
+        saveDir.mkdir("backup");
+
+        if (!moveDirectory(localPackage, backupPackage))
+        {
+            qDebug() << "backup failed!" << endl;
+            backupDir.removeRecursively();
+        }
+
+        QDir tempdir(savePath + "/temp");
+        if (!moveDirectory(latest, savePath))
+        {
+            qDebug() << "move failed" <<endl;
+            if (!moveDirectory(backupPackage, savePath))
+            {
+                qDebug() << "restore failed!" << endl;
+            }
+
+            tempdir.removeRecursively();
+            QMessageBox::critical(nullptr, "Error", "move error, Update failed.");
+            return;
+        }
+        backupDir.removeRecursively();
+        tempdir.removeRecursively();
+        QMessageBox::information(nullptr, "update", "Update successfully!");
+    }
+}
+
+bool Downloader::moveDirectory(const QString& sourceDirPath, const QString& destinationDirPath)
+{
+    QDir sourceDir(sourceDirPath);
+    QDir destinationDir(destinationDirPath);
+
+    if (!sourceDir.exists() || !destinationDir.exists()) {
+        return false;
     }
 
-    reply->deleteLater();
+    QString destinationPath = destinationDir.filePath(sourceDir.dirName());
+
+    if (QFile::exists(destinationPath)) {
+        return false;
+    }
+
+    if (!sourceDir.rename(sourceDirPath, destinationPath)) {
+        return false;
+    }
+
+    return true;
 }
 
 void Downloader::CreateLogFolder(const QString& path)
@@ -278,6 +367,82 @@ void Downloader::DownloadlicensFile(int level)
     QMessageBox::information(NULL, "", "download license succeed,please check the overdrivelicense.h file");
 }
 
+void Downloader::VerifylicenseFile()
+{
+    QString filePath = QFileDialog::getOpenFileName(nullptr, QObject::tr("Open License File"), "", QObject::tr("License Files (*.h)"));
+    if (filePath.isEmpty())
+    {
+        return;
+    }
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "Failed to open file " << file.errorString();
+        return;
+    }
+
+    QTextStream in(&file);
+    QString licenseContent = in.readAll();
+    file.close();
+
+    QString code;
+    QRegularExpression re("\"([^\"]*)\"");
+    QRegularExpressionMatch match = re.match(licenseContent);
+
+    if (match.hasMatch()) {
+        code = match.captured(1);
+    }
+    
+    static const std::vector<std::string> gs_authorizationCode = { "3VKKZ85TA8QRNSJT3HK3EC5NE82CPNH39A2DKGHC3X7UPHJ87A7KDDTRTXS7KZT3PCVUVN"
+                                                    "ME3LLCNJP33XMC2NPA78LUNGJQ7RADM8TWWCTD2AP7", //guochuang license
+                                                    "NCMD2D5EK8JDNAMCPACZGNJZ98HDEDPFJA7ZGCMLR8LZKWHAVAVDMZH57RXD2GMUHXMDPC"
+                                                    "TCRA8ZPAJAR3K3AZH8VRRZAZ5US8NRGJN7QH2CSS2J",
+                                                    "KERDFE2B3HJKZ85NQR3FWN2H7V8FFQDFA3D3A8JUVGJLDAHNN8QKEZ5FN8CNEQDQ3GNMMZ"
+                                                    "22PEQKVQZV9CMUFE8UR3K3AUJNRV6MWEPDRGMLUY8B" };
+
+    QString licenseDate;
+    QString title = "verify license";
+    QString message = "license validity date:";
+    for (int level = 0; level < gs_authorizationCode.size(); ++ level)
+    {
+        if (gs_authorizationCode[level].c_str() == code)
+        {
+            switch (level)
+            {
+            case 0:
+                licenseDate = LeveltoTime[AuthorizationLevel0];
+                break;
+            case 1:
+                licenseDate = LeveltoTime[AuthorizationLevel1];
+                break;
+            case 2:
+                licenseDate = LeveltoTime[AuthorizationLevel2];
+                break;
+            default:
+                QMessageBox::critical(nullptr, "warning", "unknown error");
+                break;
+            }
+
+            if (licenseDate == "permanent")
+            {
+                message += "permanent\nverify successfully";
+            }
+            else 
+            {
+                QString currentDate = QDate::currentDate().toString("yyyy-MM-dd");
+                if (currentDate < licenseDate) message = message + licenseDate + "\nverify successfully";
+                else message = message + licenseDate + "\nLicense has expired! verify failed!";
+            }
+
+            QMessageBox::information(NULL, title, message,
+                QMessageBox::Yes, QMessageBox::Yes);
+            return;
+        }
+    }
+    QMessageBox::critical(NULL, title, "invalid license!",
+        QMessageBox::Yes, QMessageBox::Yes);
+}
+
 void Downloader::SendFileByHttp(const QString& path)
 {
 	QEventLoop loop;
@@ -391,7 +556,7 @@ void Downloader::UpdateLog(const QString& fileName, const QString& userName)
         if (reply->error() == QNetworkReply::NoError)
         {
             QString later = "ip: " + GetLocalIP() + " filename: " + fileName + " username: " + userName;
-            QString url = "http://192.168.8.222:8080/test/";
+            QString url = g_DownloadPath+"/test/";
             QNetworkRequest request(url);
             QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
             QHttpPart newPart;

@@ -1,4 +1,3 @@
-
 #ifndef DOWNLOADER_H
 #define DOWNLOADER_H
 
@@ -10,7 +9,15 @@
 #include <QDateTime>
 #include <QFile>
 #include <QDebug>
+#include "AuthorizationLevel.h"
 
+static std::map<AuthorizationLevel, QString> LeveltoTime =
+{
+
+    {AuthorizationLevel::AuthorizationLevel0, QDate(2024,8,30).toString("yyyy-MM-dd")},
+    {AuthorizationLevel::AuthorizationLevel1, QDate(2024,12,30).toString("yyyy-MM-dd")},
+    {AuthorizationLevel::AuthorizationLevel2, "permanent"}
+};
 
 class Downloader : public QObject
 {
@@ -26,6 +33,10 @@ public:
     void SendFileByTcp(const QString &path);
     void DownloadlicensFile(int level);
     void SendFileByHttp(const QString &path);
+    void ExtractResource(const QString& archiveFilePath, const QString& extractPath);
+    void UpdatePackage(const QString& savePath);
+    bool moveDirectory(const QString& sourceDirPath, const QString& destinationDirPath);
+    void VerifylicenseFile();
     QString GetLocalIP()const;
     QByteArray GetContext() const;
     void AppendResult(const QString& res){m_result .append(res);}
@@ -35,7 +46,7 @@ private:
     QString DecryptData(const QString& data, const QString& key);
 signals:
     void updateProgress(qint64 receive, qint64 total, qreal progress);
-
+    void getdone();
 public slots:
     void ReplyFinished(QNetworkReply* reply);
     void UpdateLog(const QString& fileName, const QString& userName);
