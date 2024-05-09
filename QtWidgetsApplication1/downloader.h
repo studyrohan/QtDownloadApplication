@@ -11,9 +11,8 @@
 #include <QDebug>
 #include "AuthorizationLevel.h"
 
-static std::map<AuthorizationLevel, QString> LeveltoTime =
+static std::map<AuthorizationLevel, QString> s_LeveltoTime =
 {
-
     {AuthorizationLevel::AuthorizationLevel0, QDate(2024,8,30).toString("yyyy-MM-dd")},
     {AuthorizationLevel::AuthorizationLevel1, QDate(2024,12,30).toString("yyyy-MM-dd")},
     {AuthorizationLevel::AuthorizationLevel2, "permanent"}
@@ -35,7 +34,7 @@ public:
     void SendFileByHttp(const QString &path);
     void ExtractResource(const QString& archiveFilePath, const QString& extractPath);
     void UpdatePackage(const QString& savePath);
-    bool moveDirectory(const QString& sourceDirPath, const QString& destinationDirPath);
+    bool MoveDirectory(const QString& sourceDirPath, const QString& destinationDirPath);
     void VerifylicenseFile();
     QString GetLocalIP()const;
     QByteArray GetContext() const;

@@ -85,7 +85,6 @@ void QtWidgetsApplication1::StartDownLoad()
 		return;
 	}
 	m_download->DoDownload();
-	connect(m_download, &Downloader::getdone, this, &QtWidgetsApplication1::UpDateResult,Qt::UniqueConnection);
 }
 
 void QtWidgetsApplication1::ShowDownLoadResult()
@@ -152,7 +151,13 @@ void QtWidgetsApplication1::UpDateResult()
 		if (!savePath.isEmpty())
 		{
 			QDir dir(savePath);
-			if (!dir.exists("temp")) {
+			if (dir.exists("temp")) 
+			{
+				QDir tempDir = savePath + "/temp";
+				tempDir.removeRecursively();
+			}
+			else 
+			{
 				dir.mkdir("temp");
 			}
 			QString tempPath = savePath + "/temp";
@@ -344,7 +349,6 @@ void QtWidgetsApplication1::SendLog()
 }
 void QtWidgetsApplication1::InitSlots()
 {
-
 	connect(m_loginButton,SIGNAL(clicked()), this, SLOT(showLogin()));
 	connect(m_downloadLicenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
 	connect(m_checkbutton, SIGNAL(clicked()), this, SLOT(VerifyLicense()));
@@ -355,6 +359,7 @@ void QtWidgetsApplication1::InitSlots()
 	connect(m_button6, SIGNAL(clicked()), this, SLOT(SendLog()));
 	connect(m_loginWidget, SIGNAL(loginClicked(int)), this, SLOT(SetLogIn(int)));
 	connect(m_download, &Downloader::updateProgress, this, &QtWidgetsApplication1::ShowProgress);
+	connect(m_download, &Downloader::getdone, this, &QtWidgetsApplication1::UpDateResult, Qt::UniqueConnection);
 }
 void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal progress)
 {

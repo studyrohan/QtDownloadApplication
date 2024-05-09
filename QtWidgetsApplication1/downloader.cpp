@@ -164,12 +164,11 @@ void Downloader::ReplyFinished(QNetworkReply* reply)
 
 void Downloader::UpdatePackage(const QString& savePath)
 {
-
     QString localPackage(savePath + "/OverdriveSDK");
     QString latest(savePath + "/temp/OverdriveSDK");
     if (!QFile::exists(localPackage))
     {
-        if (!moveDirectory(latest, savePath))
+        if (!MoveDirectory(latest, savePath))
         {
             qDebug() << "move failed" << endl;
         }
@@ -186,17 +185,17 @@ void Downloader::UpdatePackage(const QString& savePath)
         QDir backupDir(backupPackage);
         saveDir.mkdir("backup");
 
-        if (!moveDirectory(localPackage, backupPackage))
+        if (!MoveDirectory(localPackage, backupPackage))
         {
             qDebug() << "backup failed!" << endl;
             backupDir.removeRecursively();
         }
 
         QDir tempdir(savePath + "/temp");
-        if (!moveDirectory(latest, savePath))
+        if (!MoveDirectory(latest, savePath))
         {
             qDebug() << "move failed" <<endl;
-            if (!moveDirectory(backupPackage, savePath))
+            if (!MoveDirectory(backupPackage, savePath))
             {
                 qDebug() << "restore failed!" << endl;
             }
@@ -211,7 +210,7 @@ void Downloader::UpdatePackage(const QString& savePath)
     }
 }
 
-bool Downloader::moveDirectory(const QString& sourceDirPath, const QString& destinationDirPath)
+bool Downloader::MoveDirectory(const QString& sourceDirPath, const QString& destinationDirPath)
 {
     QDir sourceDir(sourceDirPath);
     QDir destinationDir(destinationDirPath);
@@ -410,13 +409,13 @@ void Downloader::VerifylicenseFile()
             switch (level)
             {
             case 0:
-                licenseDate = LeveltoTime[AuthorizationLevel0];
+                licenseDate = s_LeveltoTime[AuthorizationLevel0];
                 break;
             case 1:
-                licenseDate = LeveltoTime[AuthorizationLevel1];
+                licenseDate = s_LeveltoTime[AuthorizationLevel1];
                 break;
             case 2:
-                licenseDate = LeveltoTime[AuthorizationLevel2];
+                licenseDate = s_LeveltoTime[AuthorizationLevel2];
                 break;
             default:
                 QMessageBox::critical(nullptr, "warning", "unknown error");
@@ -473,7 +472,6 @@ void Downloader::SendFileByHttp(const QString& path)
 		AppendResult("File didn't open!");
 	}
 	else {
-
 		//filePart.setBodyDevice(file);
 		file->setParent(multiPart); // The file will be deleted with the multiPart
 		QByteArray fileContext = file->readAll();
