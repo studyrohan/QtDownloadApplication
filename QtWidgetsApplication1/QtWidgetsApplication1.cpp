@@ -287,7 +287,7 @@ void QtWidgetsApplication1::CheckSoftware()
 		{
 			clock_t start,end;
 			start = clock();
-			std::string result;// = converter->to_bytes(pe.szExeFile);
+			std::string result = converter->to_bytes(pe.szExeFile);
 
 			if (std::strcmp(result.c_str(), "ODTestTool.exe") == 0)
 			{
@@ -324,7 +324,7 @@ void QtWidgetsApplication1::CheckSoftware()
 	}
 	std::string result;
 	do {
-		std::string name;// = converter->to_bytes(me.szModule);
+		std::string name = converter->to_bytes(me.szModule);
 		result += "Module Name: " + name +"\n";
 	} while (Module32Next(hSnapshot, &me));
 	m_output->setText(result.c_str());
