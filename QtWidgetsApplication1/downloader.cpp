@@ -15,8 +15,6 @@
 #include <qprocess.h>
 #include <QDirIterator>
 
-//192.168.139.39
-//110.41.63.246:8080
 QString g_DownloadPath = "http://110.41.63.246:8080";
 QString g_ServerPath = "127.0.0.1";
 
@@ -118,7 +116,7 @@ void Downloader::DoDownload()
     m_context.clear();
     connect(m_manager, SIGNAL(finished(QNetworkReply*)),
         this, SLOT(ReplyFinished(QNetworkReply*)), Qt::UniqueConnection);
-    m_manager->get(QNetworkRequest(QUrl(g_DownloadPath+ "/version.txt")));
+    m_manager->get(QNetworkRequest(QUrl(g_DownloadPath+ "/latestVersion.txt")));
 }
 
 QByteArray Downloader::GetContext()const
@@ -183,6 +181,10 @@ void Downloader::UpdatePackage(const QString& savePath)
         QString backupPackage(savePath + "/backup");
         QDir saveDir(savePath);
         QDir backupDir(backupPackage);
+        if (saveDir.exists("backup"))
+        {
+            backupDir.removeRecursively();
+        }
         saveDir.mkdir("backup");
 
         if (!MoveDirectory(localPackage, backupPackage))
@@ -197,7 +199,7 @@ void Downloader::UpdatePackage(const QString& savePath)
             qDebug() << "move failed" <<endl;
             if (!MoveDirectory(backupPackage, savePath))
             {
-                qDebug() << "restore failed!" << endl;
+                qDebug() << "restore failed, original version is in backup" << endl;
             }
 
             tempdir.removeRecursively();

@@ -370,7 +370,7 @@ void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal prog
 
 void QtWidgetsApplication1::DownloadLicense()
 {
-	if (m_isLogInlevel >= 0 && m_isLogInlevel <= 3)
+	if (m_isLogInlevel >= AuthorizationLevel0 && m_isLogInlevel <= AuthorizationLevel2)
 	{
 		m_download->DownloadlicensFile(m_isLogInlevel);
 	}
@@ -383,7 +383,7 @@ void QtWidgetsApplication1::DownloadLicense()
 
 void QtWidgetsApplication1::VerifyLicense()
 {
-	if (m_isLogInlevel >= 0 && m_isLogInlevel <= 3)
+	if (m_isLogInlevel >= AuthorizationLevel0 && m_isLogInlevel <= AuthorizationLevel2)
 	{
 		m_download->VerifylicenseFile();
 	}
