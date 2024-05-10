@@ -1,5 +1,3 @@
-
-
 #include "LoginWidget.h"
 #include "LoginClient.h"
 #include <QTcpSocket>

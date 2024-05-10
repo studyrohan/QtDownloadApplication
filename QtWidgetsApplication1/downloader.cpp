@@ -16,7 +16,7 @@
 #include <QDirIterator>
 
 QString g_DownloadPath = "http://110.41.63.246:8080";
-QString g_ServerPath = "127.0.0.1";
+QString g_ServerPath = "110.41.63.246";
 
 Downloader::Downloader(QObject* parent)
     :QObject(parent)
@@ -24,9 +24,9 @@ Downloader::Downloader(QObject* parent)
     m_manager = new QNetworkAccessManager(this);
 }
 
-QList< QString> Downloader::GetAllResource(QString url)
+QList<QString> Downloader::GetAllResource(QString url)
 {
-    QList< QString>list;
+    QList<QString>list;
     QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl(g_DownloadPath +"/version.txt")));
 	QEventLoop eventLoop;
 	connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
@@ -68,7 +68,7 @@ void Downloader::DownloadResource(const QString& res, const QString& path)
         if (!file.open(QIODevice::WriteOnly)) {
             // Handle error
              // throw exception
-            AppendResult("Failed to open file!");
+            AppendResult("Failed to open file:  " + filename);
             if (QFileInfo(path + '/' + filename).isFile())
             {
                 AppendResult("The File is exist\n");
@@ -85,29 +85,27 @@ void Downloader::DownloadResource(const QString& res, const QString& path)
     {
         AppendResult( "File Error"+ QString(e.what())+'\n');
     }
-    //extract
-    QString archiveFilePath = path + "/" + filename;
-    QString extractpath = path;
-    ExtractResource(archiveFilePath, extractpath);
 }
 
-void Downloader::ExtractResource(const QString& archiveFilePath, const QString& extractPath)
+void Downloader::ExtractResource(const QString& archivePath, const QString& extractPath)
 {
+    ClearResult();
     QString sevenZipPath = QDir::currentPath() + "/7z.exe";
     QProcess process;
     QStringList arguments;
-    arguments << "x" << "-o" + extractPath << archiveFilePath;
+    arguments << "x" << "-o" + extractPath << archivePath;
+
     process.start(sevenZipPath, arguments);
     process.waitForFinished();
 
     if (process.exitCode() == 0)
     {
-        AppendResult("Extract successfully");
+        AppendResult("Extract successfully\n");
     }
         
     else
     {
-        AppendResult("Extract failed!");
+        AppendResult("Extract failed!\n");
     }
 }
 
@@ -157,11 +155,12 @@ void Downloader::ReplyFinished(QNetworkReply* reply)
        m_context = reply->readAll();
     }
     reply->deleteLater();
-    emit getdone();
+    emit GetDone();
 }
 
 void Downloader::UpdatePackage(const QString& savePath)
 {
+    ClearResult();
     QString localPackage(savePath + "/OverdriveSDK");
     QString latest(savePath + "/temp/OverdriveSDK");
     if (!QFile::exists(localPackage))
@@ -173,9 +172,8 @@ void Downloader::UpdatePackage(const QString& savePath)
         QString tempPath = savePath + "/temp";
         QDir dir(tempPath);
         dir.removeRecursively();
-        QMessageBox::information(nullptr, "update", "update successfully, please check the package");
+        AppendResult("Update successfully");
     }
-    
     else
     {
         QString backupPackage(savePath + "/backup");
@@ -201,14 +199,13 @@ void Downloader::UpdatePackage(const QString& savePath)
             {
                 qDebug() << "restore failed, original version is in backup" << endl;
             }
-
             tempdir.removeRecursively();
             QMessageBox::critical(nullptr, "Error", "move error, Update failed.");
             return;
         }
         backupDir.removeRecursively();
         tempdir.removeRecursively();
-        QMessageBox::information(nullptr, "update", "Update successfully!");
+        AppendResult("Update successfully");
     }
 }
 

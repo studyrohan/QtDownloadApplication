@@ -24,8 +24,8 @@ signals:
 
 private slots:
     void ShowDownLoadResult();
-    void DownLoadResult();
-    void UpDateResult();
+    void DownLoadResult(int row);
+    void updateResult();
     void StartDownLoad();
     void ShowResource();
     void VerifyLicense();
@@ -43,12 +43,12 @@ private:
     QPushButton* m_loginButton;
     QPushButton* m_downloadLicenseButton;
     LoginWidget* m_loginWidget;
-    QPushButton* m_button1;
-    QPushButton* m_button2;
-    QPushButton* m_button3;
+    QPushButton* m_updateButton;
+    QPushButton* m_getresultButton;
+    QPushButton* m_showButton;
     QPushButton* m_button4;
-    QPushButton* m_button5;
-    QPushButton* m_button6;
+    QPushButton* m_checkdllButton;
+    QPushButton* m_uplogButton;
     QPushButton* m_checkbutton;
     QTextEdit* m_line;
     QLabel* m_output;

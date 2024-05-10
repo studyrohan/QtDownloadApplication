@@ -15,6 +15,7 @@
 #include <locale>
 #include <shellapi.h>
 #include <QFileDialog>
+#include <qsignalmapper.h>
 #include "downloader.h"
 #include "LoginWidget.h"
 
@@ -29,17 +30,17 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	QVBoxLayout* layout = new QVBoxLayout;
 	m_loginButton = new QPushButton("login");
 	m_downloadLicenseButton = new QPushButton("download license");
-	m_button1 = new QPushButton("update installation package");
-	m_button2 = new QPushButton("get result");
-	m_button3 = new QPushButton("show resources");
+	m_updateButton = new QPushButton("update installation package");
+	m_getresultButton = new QPushButton("get result");
+	m_showButton = new QPushButton("show resources");
 	m_checkbutton = new QPushButton("verify license");
 	m_line = new QTextEdit("to update");
 	m_line->setReadOnly(true);
 	m_resTable = new QTableWidget();
 	m_resTable->setRowCount(1);
 	m_resTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	m_button5 = new QPushButton("check overdrive package validity");
-	m_button6 = new QPushButton("upload logs");
+	m_checkdllButton = new QPushButton("check overdrive package validity");
+	m_uplogButton = new QPushButton("upload logs");
 	m_progressBar = new QProgressBar();
 	m_progressBar->setVisible(false);
 	m_progressBar->setTextVisible(true);
@@ -59,15 +60,15 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	this->resize(500,500);
 	
 	layout->addWidget(m_loginButton);
-	//layout->addWidget(m_button2);
-	layout->addWidget(m_button3);
+	//layout->addWidget(m_getresultButton);
+	layout->addWidget(m_showButton);
 	//layout->addWidget(m_line);
 	layout->addWidget(m_resTable);
-	layout->addWidget(m_button1);
+	layout->addWidget(m_updateButton);
 	layout->addWidget(m_downloadLicenseButton);
 	layout->addWidget(m_checkbutton);
-	layout->addWidget(m_button5);
-	layout->addWidget(m_button6);
+	layout->addWidget(m_checkdllButton);
+	layout->addWidget(m_uplogButton);
 	layout->addWidget(m_progressBar);
 	layout->addWidget(scrollBar);
 	setCentralWidget(new QWidget);
@@ -84,6 +85,7 @@ void QtWidgetsApplication1::StartDownLoad()
 		QMessageBox::information(NULL, "Attention", "please log in");
 		return;
 	}
+	m_output->clear();
 	m_download->DoDownload();
 }
 
@@ -101,16 +103,17 @@ void QtWidgetsApplication1::ShowDownLoadResult()
 	m_line->setText(context);
 }
 
-void QtWidgetsApplication1::DownLoadResult()
+void QtWidgetsApplication1::DownLoadResult(int row)
 {
 	//get the button row
-	int row = 0;
-	QPushButton* button = qobject_cast<QPushButton*>(this->sender());
-	if (button)
-	{	
-		QModelIndex index = m_resTable->indexAt(QPoint(button->pos().x(), button->pos().y()));
-		row = index.row();
-	}
+	//int row = 0;
+	//QPushButton* button = qobject_cast<QPushButton*>(this->sender());
+	//if (button)
+	//{	
+	//	QModelIndex index = m_resTable->indexAt(QPoint(button->pos().x(), button->pos().y()));
+	//	row = index.row();
+	//}
+	m_output->clear();
 	m_progressBar->reset();
 	m_progressBar->setVisible(true);
 	QTableWidgetItem* item = m_resTable->item(row, 0);
@@ -124,8 +127,21 @@ void QtWidgetsApplication1::DownLoadResult()
 			if(!savePath.isEmpty())
 			{
 				QString url = QString(g_DownloadPath+"/Overdrive/").append(name);
+				m_output->setText("Downloading...\n");
 				m_download->DownloadResource(url, savePath);
-				m_output->setText(m_download->GetResult());
+				//extract
+				if (m_download->GetResult().contains("finished"))
+				{
+					m_output->setText("Extracting...\n");
+					QString archivePath = savePath + "/" + name;
+					QString extractPath = savePath;
+					m_download->ExtractResource(archivePath, extractPath);
+					m_output->setText(m_download->GetResult());
+				}
+				else 
+				{
+					m_output->setText(m_download->GetResult());
+				}
 			}
 			else
 			{
@@ -138,9 +154,8 @@ void QtWidgetsApplication1::DownLoadResult()
 		}
 	}
 }
-void QtWidgetsApplication1::UpDateResult()
+void QtWidgetsApplication1::updateResult()
 {
-	disconnect(m_download, &Downloader::getdone, this, &QtWidgetsApplication1::UpDateResult);
 	m_progressBar->reset();
 	m_progressBar->setVisible(true);
 
@@ -156,14 +171,23 @@ void QtWidgetsApplication1::UpDateResult()
 				QDir tempDir = savePath + "/temp";
 				tempDir.removeRecursively();
 			}
-			else 
-			{
-				dir.mkdir("temp");
-			}
+			dir.mkdir("temp");
 			QString tempPath = savePath + "/temp";
 			QString url = QString(g_DownloadPath + "/Overdrive/").append(latestVersion);
+			m_output->setText("Downloading...\n");
 			m_download->DownloadResource(url, tempPath);
-			m_output->setText(m_download->GetResult());
+			//extract
+			if (m_download->GetResult().contains("finished"))
+			{
+				m_output->setText("Extracting...\n");
+				QString archivePath = tempPath +"/" + latestVersion;
+				m_download->ExtractResource(archivePath, tempPath);
+				m_output->setText(m_download->GetResult());
+			}
+			else
+			{
+				m_output->setText(m_download->GetResult());
+			}
 		}
 		else
 		{
@@ -179,6 +203,14 @@ void QtWidgetsApplication1::UpDateResult()
 		dir.removeRecursively();
 	}
 	m_download->UpdatePackage(savePath);
+	if (m_download->GetResult().contains("successfully"))
+	{
+		m_output->setText(m_download->GetResult());
+	}
+	else
+	{
+		m_output->setText("Update failed\n");
+	}
 }
 void QtWidgetsApplication1::ShowResource()
 {
@@ -192,8 +224,9 @@ void QtWidgetsApplication1::ShowResource()
 	
 	m_resTable->setColumnCount(2);
 	m_resTable->setRowCount(resource.size());
-	
 	m_resTable->setColumnWidth(0, 300);
+
+	QSignalMapper* signalMapper = new QSignalMapper(this);
 	for (int i = 0; i < resource.size(); i++)
 	{
 		QTableWidgetItem* resouceItem = new QTableWidgetItem();
@@ -202,8 +235,11 @@ void QtWidgetsApplication1::ShowResource()
 		
 		QPushButton* downloadButton = new QPushButton("Download");
 		m_resTable->setCellWidget(i, 1, downloadButton);
-		connect(downloadButton, SIGNAL(clicked()), this, SLOT(DownLoadResult()));	
+
+		signalMapper->setMapping(downloadButton, i);
+		connect(downloadButton, SIGNAL(clicked()), signalMapper, SLOT(map()));
 	}
+	connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(DownLoadResult(int)),Qt::QueuedConnection);
 }
 void QtWidgetsApplication1::CheckSoftware()
 {
@@ -287,7 +323,7 @@ void QtWidgetsApplication1::CheckSoftware()
 		{
 			clock_t start,end;
 			start = clock();
-			std::string result = converter->to_bytes(pe.szExeFile);
+			std::string result;// = converter->to_bytes(pe.szExeFile);
 
 			if (std::strcmp(result.c_str(), "ODTestTool.exe") == 0)
 			{
@@ -324,7 +360,7 @@ void QtWidgetsApplication1::CheckSoftware()
 	}
 	std::string result;
 	do {
-		std::string name = converter->to_bytes(me.szModule);
+		std::string name;// = converter->to_bytes(me.szModule);
 		result += "Module Name: " + name +"\n";
 	} while (Module32Next(hSnapshot, &me));
 	m_output->setText(result.c_str());
@@ -352,14 +388,14 @@ void QtWidgetsApplication1::InitSlots()
 	connect(m_loginButton,SIGNAL(clicked()), this, SLOT(showLogin()));
 	connect(m_downloadLicenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
 	connect(m_checkbutton, SIGNAL(clicked()), this, SLOT(VerifyLicense()));
-	connect(m_button1,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
-	connect(m_button2,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
-	connect(m_button3,SIGNAL(clicked()), this, SLOT(ShowResource()));
-	connect(m_button5,SIGNAL(clicked()), this, SLOT(CheckSoftware()));
-	connect(m_button6, SIGNAL(clicked()), this, SLOT(SendLog()));
+	connect(m_updateButton,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
+	connect(m_getresultButton,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
+	connect(m_showButton,SIGNAL(clicked()), this, SLOT(ShowResource()));
+	connect(m_checkdllButton,SIGNAL(clicked()), this, SLOT(CheckSoftware()));
+	connect(m_uplogButton, SIGNAL(clicked()), this, SLOT(SendLog()));
 	connect(m_loginWidget, SIGNAL(loginClicked(int)), this, SLOT(SetLogIn(int)));
 	connect(m_download, &Downloader::updateProgress, this, &QtWidgetsApplication1::ShowProgress);
-	connect(m_download, &Downloader::getdone, this, &QtWidgetsApplication1::UpDateResult, Qt::UniqueConnection);
+	connect(m_download, &Downloader::GetDone, this, &QtWidgetsApplication1::updateResult, Qt::UniqueConnection);
 }
 void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal progress)
 {

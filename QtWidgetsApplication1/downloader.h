@@ -32,7 +32,7 @@ public:
     void SendFileByTcp(const QString &path);
     void DownloadlicensFile(int level);
     void SendFileByHttp(const QString &path);
-    void ExtractResource(const QString& archiveFilePath, const QString& extractPath);
+    void ExtractResource(const QString& archivePath, const QString& extractPath);
     void UpdatePackage(const QString& savePath);
     bool MoveDirectory(const QString& sourceDirPath, const QString& destinationDirPath);
     void VerifylicenseFile();
@@ -45,7 +45,7 @@ private:
     QString DecryptData(const QString& data, const QString& key);
 signals:
     void updateProgress(qint64 receive, qint64 total, qreal progress);
-    void getdone();
+    void GetDone();
 public slots:
     void ReplyFinished(QNetworkReply* reply);
     void UpdateLog(const QString& fileName, const QString& userName);
