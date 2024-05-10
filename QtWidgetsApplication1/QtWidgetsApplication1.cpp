@@ -117,6 +117,7 @@ void QtWidgetsApplication1::DownLoadResult()
 	if (item !=nullptr)
 	{
 		QString name = item->text();
+		name = name.trimmed();
 		QByteArray fileContent;
 		try {
 			QString savePath;

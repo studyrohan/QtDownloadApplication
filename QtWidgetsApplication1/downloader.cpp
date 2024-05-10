@@ -16,7 +16,7 @@
 #include <QDirIterator>
 
 QString g_DownloadPath = "http://110.41.63.246:8080";
-QString g_ServerPath = "127.0.0.1";
+QString g_ServerPath = "110.41.63.246";
 
 Downloader::Downloader(QObject* parent)
     :QObject(parent)
@@ -57,6 +57,21 @@ void Downloader::DownloadResource(const QString& res, const QString& path)
     connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
     connect(reply, &QNetworkReply::downloadProgress, this, &Downloader::DealProgress);
     eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
+
+    if (reply->error())
+    {
+        qDebug() << "ERROR!";
+        QString str = reply->errorString();
+    }
+    else
+    {
+        qDebug() << reply->header(QNetworkRequest::ContentTypeHeader).toString();
+        qDebug() << reply->header(QNetworkRequest::LastModifiedHeader).toDateTime().toString();;
+        qDebug() << reply->header(QNetworkRequest::ContentLengthHeader).toULongLong();
+        qDebug() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        qDebug() << reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+
+    }
 
     qint64 fileSize = reply->size();
     AppendResult( "File size:" +QString::number(fileSize/(2048*2048))+" MB\n");
