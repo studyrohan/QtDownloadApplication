@@ -58,6 +58,21 @@ void Downloader::DownloadResource(const QString& res, const QString& path)
     connect(reply, &QNetworkReply::downloadProgress, this, &Downloader::DealProgress);
     eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
 
+    if (reply->error())
+    {
+        qDebug() << "ERROR!";
+        QString str = reply->errorString();
+    }
+    else
+    {
+        qDebug() << reply->header(QNetworkRequest::ContentTypeHeader).toString();
+        qDebug() << reply->header(QNetworkRequest::LastModifiedHeader).toDateTime().toString();;
+        qDebug() << reply->header(QNetworkRequest::ContentLengthHeader).toULongLong();
+        qDebug() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        qDebug() << reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+
+    }
+
     qint64 fileSize = reply->size();
     AppendResult( "File size:" +QString::number(fileSize/(2048*2048))+" MB\n");
 
