@@ -121,6 +121,7 @@ void Downloader::ExtractResource(const QString& archivePath, const QString& extr
     else
     {
         AppendResult("Extract failed!\n");
+        QMessageBox::critical(nullptr, "Attention", "download has finished but extract failed!\nplease check the package");
     }
 }
 

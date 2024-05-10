@@ -3,6 +3,7 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_QtWidgetsApplication1.h"
 #include "downloader.h"
+
 class QPushButton;
 class QTextEdit;
 class QTimer;
@@ -24,7 +25,7 @@ signals:
 
 private slots:
     void ShowDownLoadResult();
-    void DownLoadResult(int row);
+    void DownLoadResult();
     void updateResult();
     void StartDownLoad();
     void ShowResource();

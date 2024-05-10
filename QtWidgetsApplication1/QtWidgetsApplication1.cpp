@@ -15,7 +15,6 @@
 #include <locale>
 #include <shellapi.h>
 #include <QFileDialog>
-#include <qsignalmapper.h>
 #include "downloader.h"
 #include "LoginWidget.h"
 
@@ -103,16 +102,16 @@ void QtWidgetsApplication1::ShowDownLoadResult()
 	m_line->setText(context);
 }
 
-void QtWidgetsApplication1::DownLoadResult(int row)
+void QtWidgetsApplication1::DownLoadResult()
 {
 	//get the button row
-	//int row = 0;
-	//QPushButton* button = qobject_cast<QPushButton*>(this->sender());
-	//if (button)
-	//{	
-	//	QModelIndex index = m_resTable->indexAt(QPoint(button->pos().x(), button->pos().y()));
-	//	row = index.row();
-	//}
+	int row = 0;
+	QPushButton* button = qobject_cast<QPushButton*>(this->sender());
+	if (button)
+	{	
+		QModelIndex index = m_resTable->indexAt(QPoint(button->pos().x(), button->pos().y()));
+		row = index.row();
+	}
 	m_output->clear();
 	m_progressBar->reset();
 	m_progressBar->setVisible(true);
@@ -130,18 +129,29 @@ void QtWidgetsApplication1::DownLoadResult(int row)
 				QString url = QString(g_DownloadPath+"/Overdrive/").append(name);
 				m_output->setText("Downloading...\n");
 				m_download->DownloadResource(url, savePath);
+				QString downloadRes = m_download->GetResult();
+				QString extractRes;
 				//extract
-				if (m_download->GetResult().contains("finished"))
+				if (downloadRes.contains("finished"))
 				{
-					m_output->setText("Extracting...\n");
-					QString archivePath = savePath + "/" + name;
-					QString extractPath = savePath;
-					m_download->ExtractResource(archivePath, extractPath);
-					m_output->setText(m_download->GetResult());
+					int startIndex = name.lastIndexOf(".");
+					QString suffix = name.mid(startIndex + 1);
+					if (suffix == "zip" || suffix == "rar")
+					{
+						QString archivePath = savePath + "/" + name;
+						QString extractPath = savePath;
+						m_download->ExtractResource(archivePath, extractPath);
+						QString extractRes = m_download->GetResult();
+						m_output->setText(downloadRes + extractRes);
+					}
+					else
+					{
+						m_output->setText(downloadRes + "The resource cannot be extracted\n");
+					}
 				}
 				else 
 				{
-					m_output->setText(m_download->GetResult());
+					m_output->setText(downloadRes);
 				}
 			}
 			else
@@ -177,13 +187,26 @@ void QtWidgetsApplication1::updateResult()
 			QString url = QString(g_DownloadPath + "/Overdrive/").append(latestVersion);
 			m_output->setText("Downloading...\n");
 			m_download->DownloadResource(url, tempPath);
+
+			QString downloadRes = m_download->GetResult();
+			QString extractRes;
 			//extract
 			if (m_download->GetResult().contains("finished"))
 			{
-				m_output->setText("Extracting...\n");
-				QString archivePath = tempPath +"/" + latestVersion;
-				m_download->ExtractResource(archivePath, tempPath);
-				m_output->setText(m_download->GetResult());
+				int startIndex = latestVersion.lastIndexOf(".");
+				QString suffix = latestVersion.mid(startIndex + 1);
+				if (suffix == "zip" || suffix == "rar")
+				{
+					m_output->setText("Extracting...\n");
+					QString archivePath = tempPath + "/" + latestVersion;
+					m_download->ExtractResource(archivePath, tempPath);
+					QString extractRes = m_download->GetResult();
+					m_output->setText(downloadRes + extractRes);
+				}
+				else
+				{
+					m_output->setText(downloadRes + "The resource cannot be extracted\n");
+				}
 			}
 			else
 			{
@@ -227,20 +250,16 @@ void QtWidgetsApplication1::ShowResource()
 	m_resTable->setRowCount(resource.size());
 	m_resTable->setColumnWidth(0, 300);
 
-	QSignalMapper* signalMapper = new QSignalMapper(this);
 	for (int i = 0; i < resource.size(); i++)
 	{
 		QTableWidgetItem* resouceItem = new QTableWidgetItem();
 		resouceItem->setText(resource[i]);
 		m_resTable->setItem(i, 0, resouceItem);
-		
+
 		QPushButton* downloadButton = new QPushButton("Download");
 		m_resTable->setCellWidget(i, 1, downloadButton);
-
-		signalMapper->setMapping(downloadButton, i);
-		connect(downloadButton, SIGNAL(clicked()), signalMapper, SLOT(map()));
+		connect(downloadButton, SIGNAL(clicked()), this, SLOT(DownLoadResult()));
 	}
-	connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(DownLoadResult(int)),Qt::QueuedConnection);
 }
 void QtWidgetsApplication1::CheckSoftware()
 {
