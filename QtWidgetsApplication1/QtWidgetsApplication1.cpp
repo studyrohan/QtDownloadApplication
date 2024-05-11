@@ -154,7 +154,7 @@ void QtWidgetsApplication1::DownLoadResult()
 			}
 			else
 			{
-				m_output->setText("The file path error");
+				return;
 			}
 		}
 		catch (std::exception e)
@@ -208,7 +208,6 @@ void QtWidgetsApplication1::updateResult()
 		}
 		else
 		{
-			m_output->setText("The file path error");
 			return;
 		}
 	}
