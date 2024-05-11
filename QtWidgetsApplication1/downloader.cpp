@@ -49,7 +49,7 @@ QList<QString> Downloader::GetAllResource(QString url)
     return list;
 }
 
-void Downloader::DownloadResource(const QString& res, const QString& path)
+bool Downloader::DownloadResource(const QString& res, const QString& path)
 {
     ClearResult();
     QNetworkReply* reply = m_manager->get(QNetworkRequest(QUrl(res)));
@@ -70,7 +70,6 @@ void Downloader::DownloadResource(const QString& res, const QString& path)
         qDebug() << reply->header(QNetworkRequest::ContentLengthHeader).toULongLong();
         qDebug() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         qDebug() << reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-
     }
 
     qint64 fileSize = reply->size();
@@ -88,17 +87,20 @@ void Downloader::DownloadResource(const QString& res, const QString& path)
             {
                 AppendResult("The File is exist\n");
             }
+            return false;
         }
         else {
             file.write(reply->readAll());
             file.close();
             AppendResult(filename + QString(" :The download has finished!\n"));
             reply->deleteLater();
+            return true;
         }
     }
     catch (std::exception e)
     {
         AppendResult( "File Error"+ QString(e.what())+'\n');
+        return false;
     }
 }
 
@@ -121,7 +123,6 @@ void Downloader::ExtractResource(const QString& archivePath, const QString& extr
     else
     {
         AppendResult("Extract failed!\n");
-        QMessageBox::critical(nullptr, "Attention", "download has finished but extract failed!\nplease check the package");
     }
 }
 
@@ -621,5 +622,5 @@ void Downloader::UpdateLog(const QString& fileName, const QString& userName)
 void Downloader::DealProgress(qint64 bytes, qint64 total)
 {
     qreal progress = bytes * 100 / (total+0.1) ;
-    emit updateProgress(bytes, total, progress);
+    emit UpdateProgress(bytes, total, progress);
 }

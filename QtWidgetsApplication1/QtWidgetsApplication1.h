@@ -42,7 +42,7 @@ private slots:
 
 private:
     QPushButton* m_loginButton;
-    QPushButton* m_downloadLicenseButton;
+    QPushButton* m_licenseButton;
     LoginWidget* m_loginWidget;
     QPushButton* m_updateButton;
     QPushButton* m_getresultButton;
@@ -50,7 +50,7 @@ private:
     QPushButton* m_button4;
     QPushButton* m_checkdllButton;
     QPushButton* m_uplogButton;
-    QPushButton* m_checkbutton;
+    QPushButton* m_verifyButton;
     QTextEdit* m_line;
     QLabel* m_output;
     QProgressBar* m_progressBar;

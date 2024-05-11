@@ -28,11 +28,11 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	m_download = new Downloader(this);
 	QVBoxLayout* layout = new QVBoxLayout;
 	m_loginButton = new QPushButton("login");
-	m_downloadLicenseButton = new QPushButton("download license");
+	m_licenseButton = new QPushButton("download license");
 	m_updateButton = new QPushButton("update installation package");
 	m_getresultButton = new QPushButton("get result");
 	m_showButton = new QPushButton("show resources");
-	m_checkbutton = new QPushButton("verify license");
+	m_verifyButton = new QPushButton("verify license");
 	m_line = new QTextEdit("to update");
 	m_line->setReadOnly(true);
 	m_resTable = new QTableWidget();
@@ -64,8 +64,8 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	//layout->addWidget(m_line);
 	layout->addWidget(m_resTable);
 	layout->addWidget(m_updateButton);
-	layout->addWidget(m_downloadLicenseButton);
-	layout->addWidget(m_checkbutton);
+	layout->addWidget(m_licenseButton);
+	layout->addWidget(m_verifyButton);
 	layout->addWidget(m_checkdllButton);
 	layout->addWidget(m_uplogButton);
 	layout->addWidget(m_progressBar);
@@ -128,12 +128,10 @@ void QtWidgetsApplication1::DownLoadResult()
 			{
 				QString url = QString(g_DownloadPath+"/Overdrive/").append(name);
 				m_output->setText("Downloading...\n");
-				m_download->DownloadResource(url, savePath);
-				QString downloadRes = m_download->GetResult();
-				QString extractRes;
 				//extract
-				if (downloadRes.contains("finished"))
+				if (m_download->DownloadResource(url, savePath))
 				{
+					QString downloadRes = m_download->GetResult();
 					int startIndex = name.lastIndexOf(".");
 					QString suffix = name.mid(startIndex + 1);
 					if (suffix == "zip" || suffix == "rar")
@@ -146,12 +144,12 @@ void QtWidgetsApplication1::DownLoadResult()
 					}
 					else
 					{
-						m_output->setText(downloadRes + "The resource cannot be extracted\n");
+						m_output->setText(downloadRes);
 					}
 				}
 				else 
 				{
-					m_output->setText(downloadRes);
+					m_output->setText(m_download->GetResult());
 				}
 			}
 			else
@@ -186,18 +184,13 @@ void QtWidgetsApplication1::updateResult()
 			QString tempPath = savePath + "/temp";
 			QString url = QString(g_DownloadPath + "/Overdrive/").append(latestVersion);
 			m_output->setText("Downloading...\n");
-			m_download->DownloadResource(url, tempPath);
-
-			QString downloadRes = m_download->GetResult();
-			QString extractRes;
-			//extract
-			if (m_download->GetResult().contains("finished"))
+			if (m_download->DownloadResource(url, tempPath))
 			{
+				QString downloadRes = m_download->GetResult();
 				int startIndex = latestVersion.lastIndexOf(".");
 				QString suffix = latestVersion.mid(startIndex + 1);
 				if (suffix == "zip" || suffix == "rar")
 				{
-					m_output->setText("Extracting...\n");
 					QString archivePath = tempPath + "/" + latestVersion;
 					m_download->ExtractResource(archivePath, tempPath);
 					QString extractRes = m_download->GetResult();
@@ -205,7 +198,7 @@ void QtWidgetsApplication1::updateResult()
 				}
 				else
 				{
-					m_output->setText(downloadRes + "The resource cannot be extracted\n");
+					m_output->setText(downloadRes);
 				}
 			}
 			else
@@ -216,7 +209,6 @@ void QtWidgetsApplication1::updateResult()
 		else
 		{
 			m_output->setText("The file path error");
-			QMessageBox::critical(nullptr, "error", "the file path error");
 			return;
 		}
 	}
@@ -343,7 +335,7 @@ void QtWidgetsApplication1::CheckSoftware()
 		{
 			clock_t start,end;
 			start = clock();
-			std::string result;// = converter->to_bytes(pe.szExeFile);
+			std::string result = converter->to_bytes(pe.szExeFile);
 
 			if (std::strcmp(result.c_str(), "ODTestTool.exe") == 0)
 			{
@@ -380,11 +372,10 @@ void QtWidgetsApplication1::CheckSoftware()
 	}
 	std::string result;
 	do {
-		std::string name;// = converter->to_bytes(me.szModule);
+		std::string name = converter->to_bytes(me.szModule);
 		result += "Module Name: " + name +"\n";
 	} while (Module32Next(hSnapshot, &me));
 	m_output->setText(result.c_str());
-
 }
 void QtWidgetsApplication1::SendLog()
 {
@@ -406,15 +397,15 @@ void QtWidgetsApplication1::SendLog()
 void QtWidgetsApplication1::InitSlots()
 {
 	connect(m_loginButton,SIGNAL(clicked()), this, SLOT(showLogin()));
-	connect(m_downloadLicenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
-	connect(m_checkbutton, SIGNAL(clicked()), this, SLOT(VerifyLicense()));
+	connect(m_licenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
+	connect(m_verifyButton, SIGNAL(clicked()), this, SLOT(VerifyLicense()));
 	connect(m_updateButton,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
 	connect(m_getresultButton,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
 	connect(m_showButton,SIGNAL(clicked()), this, SLOT(ShowResource()));
 	connect(m_checkdllButton,SIGNAL(clicked()), this, SLOT(CheckSoftware()));
 	connect(m_uplogButton, SIGNAL(clicked()), this, SLOT(SendLog()));
 	connect(m_loginWidget, SIGNAL(loginClicked(int)), this, SLOT(SetLogIn(int)));
-	connect(m_download, &Downloader::updateProgress, this, &QtWidgetsApplication1::ShowProgress);
+	connect(m_download, &Downloader::UpdateProgress, this, &QtWidgetsApplication1::ShowProgress);
 	connect(m_download, &Downloader::GetDone, this, &QtWidgetsApplication1::updateResult, Qt::UniqueConnection);
 }
 void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal progress)

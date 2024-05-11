@@ -25,7 +25,7 @@ public:
     explicit Downloader(QObject* parent = 0);
 
     QList< QString>GetAllResource(QString url="");
-    void DownloadResource(const QString& res,const QString& path);
+    bool DownloadResource(const QString& res,const QString& path);
     void DoDownload();
     void CreateLogFolder(const QString& path);
     void UploadLog(const QString &path);
@@ -44,7 +44,7 @@ public:
 private:
     QString DecryptData(const QString& data, const QString& key);
 signals:
-    void updateProgress(qint64 receive, qint64 total, qreal progress);
+    void UpdateProgress(qint64 receive, qint64 total, qreal progress);
     void GetDone();
 public slots:
     void ReplyFinished(QNetworkReply* reply);
