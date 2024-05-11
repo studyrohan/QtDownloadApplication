@@ -28,17 +28,18 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	m_download = new Downloader(this);
 	QVBoxLayout* layout = new QVBoxLayout;
 	m_loginButton = new QPushButton("login");
-	m_downloadLicenseButton = new QPushButton("download license");
-	m_button1 = new QPushButton("update installation package");
-	m_button2 = new QPushButton("get result");
-	m_button3 = new QPushButton("show resources");
+	m_licenseButton = new QPushButton("download license");
+	m_updateButton = new QPushButton("update installation package");
+	m_getresultButton = new QPushButton("get result");
+	m_showButton = new QPushButton("show resources");
+	m_verifyButton = new QPushButton("verify license");
 	m_line = new QTextEdit("to update");
 	m_line->setReadOnly(true);
 	m_resTable = new QTableWidget();
 	m_resTable->setRowCount(1);
 	m_resTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	m_button5 = new QPushButton("check overdrive package validity");
-	m_button6 = new QPushButton("upload logs");
+	m_checkdllButton = new QPushButton("check overdrive package validity");
+	m_uplogButton = new QPushButton("upload logs");
 	m_progressBar = new QProgressBar();
 	m_progressBar->setVisible(false);
 	m_progressBar->setTextVisible(true);
@@ -57,15 +58,16 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	scrollBar->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 	this->resize(500,500);
 	
-	//layout->addWidget(m_button1);
-	//layout->addWidget(m_button2);
 	layout->addWidget(m_loginButton);
-	layout->addWidget(m_button3);
+	//layout->addWidget(m_getresultButton);
+	layout->addWidget(m_showButton);
 	//layout->addWidget(m_line);
 	layout->addWidget(m_resTable);
-	layout->addWidget(m_downloadLicenseButton);
-	layout->addWidget(m_button5);
-	layout->addWidget(m_button6);
+	layout->addWidget(m_updateButton);
+	layout->addWidget(m_licenseButton);
+	layout->addWidget(m_verifyButton);
+	layout->addWidget(m_checkdllButton);
+	layout->addWidget(m_uplogButton);
 	layout->addWidget(m_progressBar);
 	layout->addWidget(scrollBar);
 	setCentralWidget(new QWidget);
@@ -82,9 +84,10 @@ void QtWidgetsApplication1::StartDownLoad()
 		QMessageBox::information(NULL, "Attention", "please log in");
 		return;
 	}
+	m_output->clear();
 	m_download->DoDownload();
-
 }
+
 void QtWidgetsApplication1::ShowDownLoadResult()
 {
 	QByteArray context = m_download->GetContext();
@@ -109,12 +112,14 @@ void QtWidgetsApplication1::DownLoadResult()
 		QModelIndex index = m_resTable->indexAt(QPoint(button->pos().x(), button->pos().y()));
 		row = index.row();
 	}
+	m_output->clear();
 	m_progressBar->reset();
 	m_progressBar->setVisible(true);
 	QTableWidgetItem* item = m_resTable->item(row, 0);
 	if (item !=nullptr)
 	{
 		QString name = item->text();
+		name = name.trimmed();
 		QByteArray fileContent;
 		try {
 			QString savePath;
@@ -122,18 +127,104 @@ void QtWidgetsApplication1::DownLoadResult()
 			if(!savePath.isEmpty())
 			{
 				QString url = QString(g_DownloadPath+"/Overdrive/").append(name);
-				m_download->DownloadResource(url, savePath);
-				m_output->setText(m_download->GetResult());
+				m_output->setText("Downloading...\n");
+				//extract
+				if (m_download->DownloadResource(url, savePath))
+				{
+					QString downloadRes = m_download->GetResult();
+					int startIndex = name.lastIndexOf(".");
+					QString suffix = name.mid(startIndex + 1);
+					if (suffix == "zip" || suffix == "rar")
+					{
+						QString archivePath = savePath + "/" + name;
+						QString extractPath = savePath;
+						m_download->ExtractResource(archivePath, extractPath);
+						QString extractRes = m_download->GetResult();
+						m_output->setText(downloadRes + extractRes);
+					}
+					else
+					{
+						m_output->setText(downloadRes);
+					}
+				}
+				else 
+				{
+					m_output->setText(m_download->GetResult());
+				}
 			}
 			else
 			{
-				m_output->setText("The file path error");
+				return;
 			}
 		}
 		catch (std::exception e)
 		{
 			m_output->setText(e.what());
 		}
+	}
+}
+void QtWidgetsApplication1::updateResult()
+{
+	m_progressBar->reset();
+	m_progressBar->setVisible(true);
+
+	QString latestVersion = QString::fromUtf8(m_download->GetContext());
+	QString savePath;
+	savePath = QFileDialog::getExistingDirectory(nullptr, "choose directory", QDir::currentPath());
+	try {
+		if (!savePath.isEmpty())
+		{
+			QDir dir(savePath);
+			if (dir.exists("temp")) 
+			{
+				QDir tempDir = savePath + "/temp";
+				tempDir.removeRecursively();
+			}
+			dir.mkdir("temp");
+			QString tempPath = savePath + "/temp";
+			QString url = QString(g_DownloadPath + "/Overdrive/").append(latestVersion);
+			m_output->setText("Downloading...\n");
+			if (m_download->DownloadResource(url, tempPath))
+			{
+				QString downloadRes = m_download->GetResult();
+				int startIndex = latestVersion.lastIndexOf(".");
+				QString suffix = latestVersion.mid(startIndex + 1);
+				if (suffix == "zip" || suffix == "rar")
+				{
+					QString archivePath = tempPath + "/" + latestVersion;
+					m_download->ExtractResource(archivePath, tempPath);
+					QString extractRes = m_download->GetResult();
+					m_output->setText(downloadRes + extractRes);
+				}
+				else
+				{
+					m_output->setText(downloadRes);
+				}
+			}
+			else
+			{
+				m_output->setText(m_download->GetResult());
+			}
+		}
+		else
+		{
+			return;
+		}
+	}
+	catch (std::exception e)
+	{
+		m_output->setText(e.what());
+		QDir dir(savePath + "/temp");
+		dir.removeRecursively();
+	}
+	m_download->UpdatePackage(savePath);
+	if (m_download->GetResult().contains("successfully"))
+	{
+		m_output->setText(m_download->GetResult());
+	}
+	else
+	{
+		m_output->setText("Update failed\n");
 	}
 }
 void QtWidgetsApplication1::ShowResource()
@@ -148,17 +239,17 @@ void QtWidgetsApplication1::ShowResource()
 	
 	m_resTable->setColumnCount(2);
 	m_resTable->setRowCount(resource.size());
-	
 	m_resTable->setColumnWidth(0, 300);
-	for (int i =0;i< resource.size();i++)
+
+	for (int i = 0; i < resource.size(); i++)
 	{
 		QTableWidgetItem* resouceItem = new QTableWidgetItem();
 		resouceItem->setText(resource[i]);
 		m_resTable->setItem(i, 0, resouceItem);
-		
+
 		QPushButton* downloadButton = new QPushButton("Download");
 		m_resTable->setCellWidget(i, 1, downloadButton);
-		connect(downloadButton, SIGNAL(clicked()), this, SLOT(DownLoadResult()));	
+		connect(downloadButton, SIGNAL(clicked()), this, SLOT(DownLoadResult()));
 	}
 }
 void QtWidgetsApplication1::CheckSoftware()
@@ -284,7 +375,6 @@ void QtWidgetsApplication1::CheckSoftware()
 		result += "Module Name: " + name +"\n";
 	} while (Module32Next(hSnapshot, &me));
 	m_output->setText(result.c_str());
-
 }
 void QtWidgetsApplication1::SendLog()
 {
@@ -305,16 +395,17 @@ void QtWidgetsApplication1::SendLog()
 }
 void QtWidgetsApplication1::InitSlots()
 {
-
 	connect(m_loginButton,SIGNAL(clicked()), this, SLOT(showLogin()));
-	connect(m_downloadLicenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
-	connect(m_button1,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
-	connect(m_button2,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
-	connect(m_button3,SIGNAL(clicked()), this, SLOT(ShowResource()));
-	connect(m_button5,SIGNAL(clicked()), this, SLOT(CheckSoftware()));
-	connect(m_button6, SIGNAL(clicked()), this, SLOT(SendLog()));
+	connect(m_licenseButton,SIGNAL(clicked()), this, SLOT(DownloadLicense()));
+	connect(m_verifyButton, SIGNAL(clicked()), this, SLOT(VerifyLicense()));
+	connect(m_updateButton,SIGNAL(clicked()), this, SLOT(StartDownLoad()));
+	connect(m_getresultButton,SIGNAL(clicked()), this, SLOT(ShowDownLoadResult()));
+	connect(m_showButton,SIGNAL(clicked()), this, SLOT(ShowResource()));
+	connect(m_checkdllButton,SIGNAL(clicked()), this, SLOT(CheckSoftware()));
+	connect(m_uplogButton, SIGNAL(clicked()), this, SLOT(SendLog()));
 	connect(m_loginWidget, SIGNAL(loginClicked(int)), this, SLOT(SetLogIn(int)));
-	connect(m_download, &Downloader::updateProgress, this, &QtWidgetsApplication1::ShowProgress);
+	connect(m_download, &Downloader::UpdateProgress, this, &QtWidgetsApplication1::ShowProgress);
+	connect(m_download, &Downloader::GetDone, this, &QtWidgetsApplication1::updateResult, Qt::UniqueConnection);
 }
 void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal progress)
 {
@@ -325,9 +416,22 @@ void QtWidgetsApplication1::ShowProgress(qint64 received,qint64 total,qreal prog
 
 void QtWidgetsApplication1::DownloadLicense()
 {
-	if (m_isLogInlevel >= 0 && m_isLogInlevel <= 3)
+	if (m_isLogInlevel >= AuthorizationLevel0 && m_isLogInlevel <= AuthorizationLevel2)
 	{
 		m_download->DownloadlicensFile(m_isLogInlevel);
+	}
+	else
+	{
+		QMessageBox::information(NULL, "Attention", "please log in");
+		return;
+	}
+}
+
+void QtWidgetsApplication1::VerifyLicense()
+{
+	if (m_isLogInlevel >= AuthorizationLevel0 && m_isLogInlevel <= AuthorizationLevel2)
+	{
+		m_download->VerifylicenseFile();
 	}
 	else
 	{
