@@ -47,7 +47,7 @@ LoginWidget::LoginWidget(QDialog* parent) : QDialog(parent) {
 
     registerLayout->addWidget(registerButton);
     registerLayout->addWidget(loginButton);
-    registerLayout->addWidget(checkLicenceButton);
+    //registerLayout->addWidget(checkLicenceButton);
     registerLayout->addWidget(cancelButton);
 
     layout->addLayout(userLayout);
