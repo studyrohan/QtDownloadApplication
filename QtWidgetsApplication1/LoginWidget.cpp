@@ -41,7 +41,7 @@ LoginWidget::LoginWidget(QDialog* parent) : QDialog(parent) {
 
     QPushButton* registerButton = new QPushButton("Register", this);
     QPushButton* loginButton = new QPushButton("Login", this);
-    QPushButton* checkLicenceButton = new QPushButton("check license", this);
+    //QPushButton* checkLicenceButton = new QPushButton("check license", this);
     QPushButton* cancelButton = new QPushButton("Cancel", this);
     QHBoxLayout* registerLayout = new QHBoxLayout(this);
 
@@ -59,7 +59,7 @@ LoginWidget::LoginWidget(QDialog* parent) : QDialog(parent) {
     this->resize(500, 500);
     connect(registerButton, &QPushButton::clicked, this, &LoginWidget::Register);
     connect(loginButton, &QPushButton::clicked, this, &LoginWidget::login);
-    connect(checkLicenceButton, &QPushButton::clicked, this, &LoginWidget::CheckLicense);
+    //connect(checkLicenceButton, &QPushButton::clicked, this, &LoginWidget::CheckLicense);
     connect(cancelButton, &QPushButton::clicked, this, &LoginWidget::cancel);
     connect(m_client, &LoginClient::loginSucceed, this, &LoginWidget::loginSucceed);
 }
