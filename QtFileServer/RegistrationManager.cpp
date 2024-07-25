@@ -118,6 +118,13 @@ QString RegistrationManager::GetlicenceExpirationDate(const std::string& invitat
 
 bool RegistrationManager::InitDataBase()
 {
+	QStringList drivers = QSqlDatabase::drivers();
+
+	// 打印所有驱动名称
+	qDebug() << "Available database drivers:";
+	foreach(const QString & driver, drivers) {
+		qDebug() << driver;
+	}
 	db = QSqlDatabase::addDatabase("QSQLITE");
 	db.setDatabaseName("UserDB.db");
 

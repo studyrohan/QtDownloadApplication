@@ -15,8 +15,14 @@
 #include <qprocess.h>
 #include <QDirIterator>
 
-QString g_DownloadPath = "http://110.41.63.246:8080";
-QString g_ServerPath = "110.41.63.246";
+//QString g_DownloadPath = "http://110.41.63.246:8080";
+//QString g_ServerPath = "110.41.63.246";
+
+//QString g_DownloadPath = "http://192.168.139.48:8080";
+//QString g_ServerPath = "192.168.139.48";
+
+QString g_DownloadPath = "http://192.168.139.48:8080";
+QString g_ServerPath = "127.0.0.1";
 
 Downloader::Downloader(QObject* parent)
     :QObject(parent)
@@ -78,6 +84,11 @@ bool Downloader::DownloadResource(const QString& res, const QString& path)
     int startIndex = res.lastIndexOf("/");
     QString filename = res.mid(startIndex + 1);
     QFile file(path + '/' + filename);
+    if (file.exists())
+    {
+        AppendResult("The File already exist in choosing folder\n");
+        return false;
+    }
     try {
         if (!file.open(QIODevice::WriteOnly)) {
             // Handle error
@@ -85,7 +96,7 @@ bool Downloader::DownloadResource(const QString& res, const QString& path)
             AppendResult("Failed to open file:  " + filename);
             if (QFileInfo(path + '/' + filename).isFile())
             {
-                AppendResult("The File is exist\n");
+                AppendResult("The File exist\n");
             }
             return false;
         }
@@ -350,6 +361,7 @@ void Downloader::DownloadlicensFile(int level)
 	// Wait for the reply
 	if (!socket.waitForReadyRead(5000)) {
 		qDebug() << "No reply from the server: " << socket.errorString();
+        QMessageBox::information(NULL, "", "download license error");
 		return ;
 	}
 

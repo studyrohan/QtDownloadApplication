@@ -43,6 +43,8 @@ private slots:
 private:
     QPushButton* m_loginButton;
     QPushButton* m_licenseButton;
+    //QTextEdit* m_mac;
+    //QPushButton* m_licenseButtonBaseMac;
     LoginWidget* m_loginWidget;
     QPushButton* m_updateButton;
     QPushButton* m_getresultButton;

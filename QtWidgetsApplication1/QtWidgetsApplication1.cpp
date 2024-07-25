@@ -29,6 +29,7 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget *parent)
 	QVBoxLayout* layout = new QVBoxLayout;
 	m_loginButton = new QPushButton("login");
 	m_licenseButton = new QPushButton("download license");
+	//m_licenseButtonBaseMac = new QPushButton("download license mac");
 	m_updateButton = new QPushButton("update installation package");
 	m_getresultButton = new QPushButton("get result");
 	m_showButton = new QPushButton("show resources");
@@ -237,7 +238,7 @@ void QtWidgetsApplication1::ShowResource()
 	}
 	QList<QString> resource = m_download->GetAllResource();
 	
-	m_resTable->setColumnCount(2);
+	m_resTable->setColumnCount(4);
 	m_resTable->setRowCount(resource.size());
 	m_resTable->setColumnWidth(0, 300);
 
@@ -250,6 +251,20 @@ void QtWidgetsApplication1::ShowResource()
 		QPushButton* downloadButton = new QPushButton("Download");
 		m_resTable->setCellWidget(i, 1, downloadButton);
 		connect(downloadButton, SIGNAL(clicked()), this, SLOT(DownLoadResult()));
+
+		QTableWidgetItem* platformItem = new QTableWidgetItem();
+		QString platform = "windows";
+		if (resource[i].contains("linux"))
+		{
+			platform = "linux";
+		}
+		platformItem->setText(platform);
+		m_resTable->setItem(i, 2, platformItem);
+
+		int version = resource[i].indexOf("-");
+		QTableWidgetItem* versionItem = new QTableWidgetItem();
+		versionItem->setText(resource[i].mid(version+1, 8));
+		m_resTable->setItem(i, 3, versionItem);
 	}
 }
 void QtWidgetsApplication1::CheckSoftware()
